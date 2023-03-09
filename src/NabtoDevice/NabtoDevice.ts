@@ -19,6 +19,16 @@ export interface LogMessage {
   severity: string
 }
 
+export interface DeviceConfiguration {
+  productId: string;
+  deviceId: string;
+  appName?: string;
+  appVersion?: string;
+  localPort: number;
+  p2pPort: number;
+  deviceFingerprint: string;
+}
+
 export class NabtoDevice {
   nabtoDevice: any;
 
@@ -53,6 +63,10 @@ export class NabtoDevice {
   setLogCallback(callback: (logMessage: LogMessage) => void)
   {
       this.nabtoDevice.setLogCallback(callback);
+  }
+
+  getConfiguration() : DeviceConfiguration {
+    return this.nabtoDevice.getConfiguration();
   }
 
 

@@ -38,6 +38,7 @@ class NodeNabtoDevice : public Napi::ObjectWrap<NodeNabtoDevice> {
   Napi::Value CreatePrivateKey(const Napi::CallbackInfo& info);
   void SetLogLevel(const Napi::CallbackInfo& info);
   void SetLogCallback(const Napi::CallbackInfo& info);
+  Napi::Value GetConfiguration(const Napi::CallbackInfo& info);
 
   NabtoDevice* nabtoDevice_;
   LogCallbackFunction logCallback_;

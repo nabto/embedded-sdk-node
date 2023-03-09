@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --timeout 15000",
-    "install": "node-gyp rebuild"
+    "install": "node-gyp rebuild",
+    "buildAndTest": "node-gyp rebuild && mocha --timeout 15000"
   },
   "repository": {
     "type": "git",
