@@ -11,22 +11,10 @@ public:
   StartFutureContext(NabtoDevice *device, Napi::Env env) : FutureContext(device, env)
   {
     nabto_device_start(device_, future_);
-    arm();
+    arm(false);
   }
 };
 
-static std::string
-logSeverityToString(NabtoDeviceLogLevel s)
-{
-  switch(s) {
-    case NABTO_DEVICE_LOG_FATAL: return "fatal";
-    case NABTO_DEVICE_LOG_ERROR: return "error";
-    case NABTO_DEVICE_LOG_WARN: return "warn";
-    case NABTO_DEVICE_LOG_INFO: return "info";
-    case NABTO_DEVICE_LOG_TRACE: return "trace";
-    default: return "trace";
-  }
-}
 
 Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func =
@@ -41,6 +29,7 @@ Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
                       InstanceMethod("stop", &NodeNabtoDevice::Stop),
                       InstanceMethod("start", &NodeNabtoDevice::Start),
                       InstanceMethod("getConfiguration", &NodeNabtoDevice::GetConfiguration),
+                      InstanceMethod("setBasestationAttach", &NodeNabtoDevice::SetBasestationAttach),
                   });
 
   Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -216,6 +205,18 @@ void NodeNabtoDevice::SetOptions(const Napi::CallbackInfo& info) {
       return;
     }
   }
+
+  if (opts.Has("enableMdns") && opts.Get("enableMdns").IsBoolean() && opts.Get("enableMdns").ToBoolean().Value())
+  {
+    ec = nabto_device_enable_mdns(nabtoDevice_);
+    if (ec != NABTO_DEVICE_EC_OK)
+    {
+      std::string msg = "Failed to set p2p port with error: ";
+      msg += nabto_device_error_get_message(ec);
+      Napi::Error::New(info.Env(), msg).ThrowAsJavaScriptException();
+      return;
+    }
+  }
 }
 
 Napi::Value NodeNabtoDevice::GetConfiguration(const Napi::CallbackInfo& info)
@@ -263,6 +264,22 @@ Napi::Value NodeNabtoDevice::CreatePrivateKey(const Napi::CallbackInfo& info) {
   return retVal;
 }
 
+void NodeNabtoDevice::SetBasestationAttach(const Napi::CallbackInfo& info)
+{
+  int length = info.Length();
+  Napi::Value result;
+  if (length <= 0 || !info[0].IsBoolean() ) {
+    Napi::TypeError::New(info.Env(), "Boolean expected").ThrowAsJavaScriptException();
+    return;
+  }
+
+  NabtoDeviceError ec = nabto_device_set_basestation_attach(nabtoDevice_, info[0].ToBoolean().Value());
+  if (ec != NABTO_DEVICE_EC_OK) {
+    Napi::TypeError::New(info.Env(), nabto_device_error_get_message(ec)).ThrowAsJavaScriptException();
+    return;
+  }
+}
+
 
 void NodeNabtoDevice::SetLogLevel(const Napi::CallbackInfo& info)
 {
@@ -305,7 +322,7 @@ void NodeNabtoDevice::LogCallback(NabtoDeviceLogMessage* log, void* userData)
 {
     NodeNabtoDevice* device = static_cast<NodeNabtoDevice*>(userData);
 
-    auto l = new LogMessage(log->message, logSeverityToString(log->severity));
+    auto l = new LogMessage(log->message, nabto_device_log_severity_as_string(log->severity));
     device->logCallback_.NonBlockingCall(l);
 }
 

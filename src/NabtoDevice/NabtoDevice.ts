@@ -1,4 +1,4 @@
-var nabto_device = require('bindings')('nabto_device');
+import { NabtoDeviceImpl } from "./impl/NabtoDeviceImpl";
 
 
 export interface DeviceOptions {
@@ -12,6 +12,7 @@ export interface DeviceOptions {
   appVersion?: string;
   localPort?: number;
   p2pPort?: number;
+  enableMdns?: Boolean;
 }
 
 export interface LogMessage {
@@ -29,45 +30,42 @@ export interface DeviceConfiguration {
   deviceFingerprint: string;
 }
 
-export class NabtoDevice {
-  nabtoDevice: any;
+export enum ConnectionEvent {
+  OPENED = 0,
+  CLOSED,
+  CHANNEL_CHANGED,
+}
 
-  constructor() {
-    this.nabtoDevice = new nabto_device.NabtoDevice();
+export enum DeviceEvent {
+  ATTACHED = 0,
+  DETACHED,
+  CLOSED,
+  UNKNOWN_FINGERPRINT,
+  WRONG_PRODUCT_ID,
+  WRONG_DEVICE_ID,
+}
+
+export type ConnectionEventCallback = (ev: ConnectionEvent, connectionRef: any) => void;
+
+export type DeviceEventCallback = (ev: DeviceEvent) => void;
+
+export interface NabtoDevice {
+  stop(): void;
+  start(): Promise<void>;
+  version(): string;
+  setOptions(opts: DeviceOptions): void;
+  createPrivateKey(): string;
+  setLogLevel(logLevel: string): void;
+  setLogCallback(callback: (logMessage: LogMessage) => void): void;
+  getConfiguration() : DeviceConfiguration;
+  setBasestationAttach(enable: Boolean): void;
+  onConnectionEvent(fn: ConnectionEventCallback): void;
+  onDeviceEvent(fn: DeviceEventCallback): void;
+
+}
+
+export class NabtoDeviceFactory {
+  static create(): NabtoDevice {
+    return new NabtoDeviceImpl();
   }
-
-  stop() {
-    this.nabtoDevice.stop();
-  }
-
-  start() : Promise<void> {
-    return this.nabtoDevice.start();
-  }
-
-  version(): string {
-    return this.nabtoDevice.getVersion();
-  }
-
-  setOptions(opts: DeviceOptions): void {
-    return this.nabtoDevice.setOptions(opts);
-  }
-
-  createPrivateKey() : string {
-    return this.nabtoDevice.createPrivateKey();
-  }
-
-  setLogLevel(logLevel: string) {
-    this.nabtoDevice.setLogLevel(logLevel);
-  }
-
-  setLogCallback(callback: (logMessage: LogMessage) => void)
-  {
-      this.nabtoDevice.setLogCallback(callback);
-  }
-
-  getConfiguration() : DeviceConfiguration {
-    return this.nabtoDevice.getConfiguration();
-  }
-
-
 }

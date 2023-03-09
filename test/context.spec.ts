@@ -2,7 +2,7 @@ import 'mocha'
 import { strict as assert } from 'node:assert';
 import chai from 'chai';
 
-import { DeviceOptions, LogMessage, NabtoDevice } from '../src/NabtoDevice/NabtoDevice'
+import { DeviceOptions, LogMessage, NabtoDevice, NabtoDeviceFactory } from '../src/NabtoDevice/NabtoDevice'
 
 const expect = chai.expect;
 
@@ -24,7 +24,7 @@ describe('lifecycle', () => {
   let dev: NabtoDevice;
 
   beforeEach(() => {
-    dev = new NabtoDevice();
+    dev = NabtoDeviceFactory.create();
   });
 
   afterEach(() => {
@@ -104,6 +104,7 @@ describe('lifecycle', () => {
         appVersion: "0.0.42",
         localPort: 5252,
         p2pPort: 6363,
+        enableMdns: true,
     }
     dev.setOptions(opts);
 
@@ -124,6 +125,11 @@ describe('lifecycle', () => {
     dev.setLogCallback((logMessage: LogMessage) => {
         console.log(logMessage);
     });
+  });
+
+  it('set basestation attach', () => {
+    dev.setBasestationAttach(true);
+    dev.setBasestationAttach(false);
   });
 
   it('start device', async () => {

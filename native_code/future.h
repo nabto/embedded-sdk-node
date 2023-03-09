@@ -18,8 +18,13 @@ public:
         nabto_device_future_free(future_);
     }
 
-    void arm() {
+    void arm(bool repeatable) {
+        repeatable_ = repeatable;
         nabto_device_future_set_callback(future_, FutureContext::futureCallback, this);
+    }
+
+    void stop() {
+        ttsf_.Release();
     }
 
     static void CallJS(Napi::Env env, Napi::Function callback, FutureContext *context, void **data)
@@ -41,7 +46,9 @@ public:
         ctx->ec_ = ec;
 
         ctx->ttsf_.NonBlockingCall();
-        ctx->ttsf_.Release();
+        if (!ctx->repeatable_) {
+            ctx->stop();
+        }
     }
 
     Napi::Value Promise()
@@ -54,4 +61,5 @@ public:
     TTSF ttsf_;
     Napi::Promise::Deferred deferred_;
     NabtoDeviceError ec_;
+    bool repeatable_ = false;
 };
