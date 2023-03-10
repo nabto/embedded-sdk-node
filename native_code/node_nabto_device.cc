@@ -31,6 +31,9 @@ Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
                       InstanceMethod("setBasestationAttach", &NodeNabtoDevice::SetBasestationAttach),
                       InstanceMethod("notifyDeviceEvent", &NodeNabtoDevice::NotifyDeviceEvent),
                       InstanceMethod("getCurrentDeviceEvent", &NodeNabtoDevice::GetCurrentDeviceEvent),
+                      InstanceMethod("notifyConnectionEvent", &NodeNabtoDevice::NotifyConnectionEvent),
+                      InstanceMethod("getCurrentConnectionEvent", &NodeNabtoDevice::GetCurrentConnectionEvent),
+                      InstanceMethod("getCurrentConnectionRef", &NodeNabtoDevice::GetCurrentConnectionRef),
                   });
 
   Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -44,6 +47,7 @@ Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
 NodeNabtoDevice::NodeNabtoDevice(const Napi::CallbackInfo& info)
     : Napi::ObjectWrap<NodeNabtoDevice>(info) {
   devEvents_ = NULL;
+  connEvents_ = NULL;
   nabtoDevice_ = nabto_device_new();
 }
 
@@ -60,6 +64,9 @@ void NodeNabtoDevice::Stop(const Napi::CallbackInfo& info)
 {
   if (devEvents_ != NULL) {
     devEvents_->stop();
+  }
+  if (connEvents_ != NULL) {
+    connEvents_->stop();
   }
   nabto_device_stop(nabtoDevice_);
   nabto_device_set_log_callback(nabtoDevice_, NULL, NULL);
@@ -288,7 +295,7 @@ void NodeNabtoDevice::SetBasestationAttach(const Napi::CallbackInfo& info)
 
 
 
-/************ DEVICE ENVENTS *********/
+/************ DEVICE EVENTS *********/
 Napi::Value NodeNabtoDevice::NotifyDeviceEvent(const Napi::CallbackInfo& info)
 {
   if (devEvents_ == NULL) {
@@ -302,6 +309,28 @@ Napi::Value NodeNabtoDevice::NotifyDeviceEvent(const Napi::CallbackInfo& info)
 Napi::Value NodeNabtoDevice::GetCurrentDeviceEvent(const Napi::CallbackInfo& info)
 {
   return Napi::String::New(info.Env(), devEvents_->getEventString());
+}
+
+
+/************ CONNECTION EVENTS *********/
+Napi::Value NodeNabtoDevice::NotifyConnectionEvent(const Napi::CallbackInfo& info)
+{
+  if (connEvents_ == NULL) {
+    connEvents_ = new ConnectionEventFutureContext(nabtoDevice_, info.Env());
+  } else {
+    connEvents_->rearm();
+  }
+  return connEvents_->Promise();
+}
+
+Napi::Value NodeNabtoDevice::GetCurrentConnectionEvent(const Napi::CallbackInfo& info)
+{
+  return Napi::String::New(info.Env(), connEvents_->getEventString());
+}
+
+Napi::Value NodeNabtoDevice::GetCurrentConnectionRef(const Napi::CallbackInfo& info)
+{
+  return Napi::Number::New(info.Env(), connEvents_->getConnectionRef());
 }
 
 

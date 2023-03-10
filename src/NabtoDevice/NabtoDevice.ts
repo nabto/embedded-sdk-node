@@ -31,9 +31,9 @@ export interface DeviceConfiguration {
 }
 
 export enum ConnectionEvent {
-  OPENED = 0,
-  CLOSED,
-  CHANNEL_CHANGED,
+  OPENED = "NABTO_DEVICE_CONNECTION_EVENT_OPENED",
+  CLOSED = "NABTO_DEVICE_CONNECTION_EVENT_CLOSED",
+  CHANNEL_CHANGED = "NABTO_DEVICE_CONNECTION_EVENT_CHANNEL_CHANGED",
 }
 
 export enum DeviceEvent {
@@ -45,19 +45,15 @@ export enum DeviceEvent {
   WRONG_DEVICE_ID = "NABTO_DEVICE_EVENT_WRONG_DEVICE_ID",
 }
 
+export type ConnectionRef = any;
 
-// export enum DeviceEvent {
-//   ATTACHED = 0,
-//   DETACHED = 1,
-//   CLOSED = 2,
-//   UNKNOWN_FINGERPRINT = 3,
-//   WRONG_PRODUCT_ID = 4,
-//   WRONG_DEVICE_ID = 5,
-// }
-
-export type ConnectionEventCallback = (ev: ConnectionEvent, connectionRef: any) => void;
+export type ConnectionEventCallback = (ev: ConnectionEvent, connectionRef: ConnectionRef) => void;
 
 export type DeviceEventCallback = (ev: DeviceEvent) => void;
+
+export interface Connection {
+  getClientFingerprint(connectionRef: ConnectionRef): string;
+}
 
 export interface NabtoDevice {
   stop(): void;
@@ -71,6 +67,7 @@ export interface NabtoDevice {
   setBasestationAttach(enable: Boolean): void;
   onConnectionEvent(fn: ConnectionEventCallback): void;
   onDeviceEvent(fn: DeviceEventCallback): void;
+  connection: Connection;
 
 }
 

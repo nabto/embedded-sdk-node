@@ -1,4 +1,4 @@
-import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent } from "../NabtoDevice";
+import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent, ConnectionRef, Connection } from "../NabtoDevice";
 
 var nabto_device = require('bindings')('nabto_device');
 
@@ -66,6 +66,13 @@ export class NabtoDeviceImpl implements NabtoDevice {
 
     }
 
+    connection: Connection = {
+        getClientFingerprint(connectionRef: ConnectionRef): string
+        {
+            return "FINGERPRINT";
+        }
+    }
+
 
     private async startDeviceEventListener(): Promise<void>
     {
@@ -81,14 +88,18 @@ export class NabtoDeviceImpl implements NabtoDevice {
         }
     }
 
-    private startConnectionEventListener()
+    private async startConnectionEventListener(): Promise<void>
     {
-
+        try {
+            await this.nabtoDevice.notifyConnectionEvent();
+            let ev: ConnectionEvent = this.nabtoDevice.getCurrentConnectionEvent();
+            let ref: ConnectionRef = this.nabtoDevice.getCurrentConnectionRef();
+            for (let f of this.connectionEventListeners) {
+                f(ev, ref);
+            }
+            return this.startConnectionEventListener();
+        } catch (err) {
+            // TODO: handle... probably just closing down
+        }
     }
-
-    nativeDeviceEventCb()
-    {
-
-    }
-
 }

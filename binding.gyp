@@ -21,7 +21,8 @@
             {
                 'destination': './build/Release',
                 'files':[
-                    './native_libraries/lib/linux-x86_64/libnabto_device.so'
+                    './native_libraries/lib/linux-x86_64/libnabto_device.so',
+                    './native_libraries/lib/linux-x86_64/libnabto_client.so'
                 ]
             }
       ],

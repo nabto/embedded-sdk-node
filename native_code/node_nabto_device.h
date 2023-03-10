@@ -3,6 +3,7 @@
 #include <napi.h>
 #include <nabto/nabto_device.h>
 #include "future.h"
+#include "connection_events.h"
 
 class LogMessage {
  public:
@@ -46,30 +47,11 @@ class DeviceEventFutureContext: public FutureContext
     } else if (event_ == NABTO_DEVICE_EVENT_WRONG_PRODUCT_ID) {
         return "NABTO_DEVICE_EVENT_WRONG_PRODUCT_ID";
     } else if (event_ == NABTO_DEVICE_EVENT_WRONG_DEVICE_ID) {
-        return "";
+        return "NABTO_DEVICE_EVENT_WRONG_DEVICE_ID";
     } else {
         return "";
     }
   }
-
-
-//   int getEvent() {
-//     if (event_ == NABTO_DEVICE_EVENT_ATTACHED) {
-//         return 0;
-//     } else if (event_ == NABTO_DEVICE_EVENT_DETACHED) {
-//         return 1;
-//     } else if (event_ == NABTO_DEVICE_EVENT_CLOSED) {
-//         return 2;
-//     } else if (event_ == NABTO_DEVICE_EVENT_UNKNOWN_FINGERPRINT) {
-//         return 3;
-//     } else if (event_ == NABTO_DEVICE_EVENT_WRONG_PRODUCT_ID) {
-//         return 4;
-//     } else if (event_ == NABTO_DEVICE_EVENT_WRONG_DEVICE_ID) {
-//         return 5;
-//     } else {
-//         return -1;
-//     }
-//   }
 
   NabtoDeviceListener* lis_;
   NabtoDeviceEvent event_;
@@ -103,8 +85,12 @@ class NodeNabtoDevice : public Napi::ObjectWrap<NodeNabtoDevice> {
   void SetBasestationAttach(const Napi::CallbackInfo& info);
   Napi::Value NotifyDeviceEvent(const Napi::CallbackInfo& info);
   Napi::Value GetCurrentDeviceEvent(const Napi::CallbackInfo& info);
+  Napi::Value NotifyConnectionEvent(const Napi::CallbackInfo& info);
+  Napi::Value GetCurrentConnectionEvent(const Napi::CallbackInfo& info);
+  Napi::Value GetCurrentConnectionRef(const Napi::CallbackInfo& info);
 
   NabtoDevice* nabtoDevice_;
   LogCallbackFunction logCallback_;
   DeviceEventFutureContext* devEvents_;
+  ConnectionEventFutureContext* connEvents_;
 };
