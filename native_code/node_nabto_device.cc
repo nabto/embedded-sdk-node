@@ -15,7 +15,6 @@ public:
   }
 };
 
-
 Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func =
       DefineClass(env,
@@ -30,6 +29,8 @@ Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
                       InstanceMethod("start", &NodeNabtoDevice::Start),
                       InstanceMethod("getConfiguration", &NodeNabtoDevice::GetConfiguration),
                       InstanceMethod("setBasestationAttach", &NodeNabtoDevice::SetBasestationAttach),
+                      InstanceMethod("notifyDeviceEvent", &NodeNabtoDevice::NotifyDeviceEvent),
+                      InstanceMethod("getCurrentDeviceEvent", &NodeNabtoDevice::GetCurrentDeviceEvent),
                   });
 
   Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -42,7 +43,7 @@ Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
 
 NodeNabtoDevice::NodeNabtoDevice(const Napi::CallbackInfo& info)
     : Napi::ObjectWrap<NodeNabtoDevice>(info) {
-
+  devEvents_ = NULL;
   nabtoDevice_ = nabto_device_new();
 }
 
@@ -57,10 +58,15 @@ void NodeNabtoDevice::Finalize(Napi::Env env)
 
 void NodeNabtoDevice::Stop(const Napi::CallbackInfo& info)
 {
-    nabto_device_set_log_callback(nabtoDevice_, NULL, NULL);
-    if (logCallback_ != nullptr) {
-        logCallback_.Release();
-    }
+  if (devEvents_ != NULL) {
+    devEvents_->stop();
+  }
+  nabto_device_stop(nabtoDevice_);
+  nabto_device_set_log_callback(nabtoDevice_, NULL, NULL);
+  if (logCallback_ != nullptr)
+  {
+    logCallback_.Release();
+  }
 }
 
 Napi::Value NodeNabtoDevice::Start(const Napi::CallbackInfo& info)
@@ -281,6 +287,26 @@ void NodeNabtoDevice::SetBasestationAttach(const Napi::CallbackInfo& info)
 }
 
 
+
+/************ DEVICE ENVENTS *********/
+Napi::Value NodeNabtoDevice::NotifyDeviceEvent(const Napi::CallbackInfo& info)
+{
+  if (devEvents_ == NULL) {
+    devEvents_ = new DeviceEventFutureContext(nabtoDevice_, info.Env());
+  } else {
+    devEvents_->rearm();
+  }
+  return devEvents_->Promise();
+}
+
+Napi::Value NodeNabtoDevice::GetCurrentDeviceEvent(const Napi::CallbackInfo& info)
+{
+  return Napi::String::New(info.Env(), devEvents_->getEventString());
+}
+
+
+
+/********* LOGGING ****/
 void NodeNabtoDevice::SetLogLevel(const Napi::CallbackInfo& info)
 {
   int length = info.Length();

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha --timeout 15000",
     "install": "node-gyp rebuild",
-    "buildAndTest": "node-gyp rebuild && mocha --timeout 15000"
+    "buildAndTest": "node-gyp build --debug && mocha --timeout 15000"
   },
   "repository": {
     "type": "git",

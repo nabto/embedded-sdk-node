@@ -37,13 +37,23 @@ export enum ConnectionEvent {
 }
 
 export enum DeviceEvent {
-  ATTACHED = 0,
-  DETACHED,
-  CLOSED,
-  UNKNOWN_FINGERPRINT,
-  WRONG_PRODUCT_ID,
-  WRONG_DEVICE_ID,
+  ATTACHED = "NABTO_DEVICE_EVENT_ATTACHED",
+  DETACHED = "NABTO_DEVICE_EVENT_DETACHED",
+  CLOSED = "NABTO_DEVICE_EVENT_CLOSED",
+  UNKNOWN_FINGERPRINT = "NABTO_DEVICE_EVENT_UNKNOWN_FINGERPRINT",
+  WRONG_PRODUCT_ID = "NABTO_DEVICE_EVENT_WRONG_PRODUCT_ID",
+  WRONG_DEVICE_ID = "NABTO_DEVICE_EVENT_WRONG_DEVICE_ID",
 }
+
+
+// export enum DeviceEvent {
+//   ATTACHED = 0,
+//   DETACHED = 1,
+//   CLOSED = 2,
+//   UNKNOWN_FINGERPRINT = 3,
+//   WRONG_PRODUCT_ID = 4,
+//   WRONG_DEVICE_ID = 5,
+// }
 
 export type ConnectionEventCallback = (ev: ConnectionEvent, connectionRef: any) => void;
 

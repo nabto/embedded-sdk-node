@@ -2,6 +2,7 @@
 
 #include <napi.h>
 #include <nabto/nabto_device.h>
+#include "future.h"
 
 class LogMessage {
  public:
@@ -12,6 +13,66 @@ class LogMessage {
 
     std::string message_;
     std::string severity_;
+};
+
+class DeviceEventFutureContext: public FutureContext
+{
+  public:
+  DeviceEventFutureContext(NabtoDevice* device, Napi::Env env) : FutureContext(device, env)
+  {
+    lis_ = nabto_device_listener_new(device_);
+    NabtoDeviceError ec = nabto_device_device_events_init_listener(device_, lis_);
+    // TODO: error handling
+
+    nabto_device_listener_device_event(lis_, future_, &event_);
+    arm(true);
+  }
+
+  void rearm() {
+    nabto_device_listener_device_event(lis_, future_, &event_);
+    arm(true);
+  }
+
+// TODO: replace this with new embedded sdk api function for this.
+  std::string getEventString() {
+    if (event_ == NABTO_DEVICE_EVENT_ATTACHED) {
+        return "NABTO_DEVICE_EVENT_ATTACHED";
+    } else if (event_ == NABTO_DEVICE_EVENT_DETACHED) {
+        return "NABTO_DEVICE_EVENT_DETACHED";
+    } else if (event_ == NABTO_DEVICE_EVENT_CLOSED) {
+        return "NABTO_DEVICE_EVENT_CLOSED";
+    } else if (event_ == NABTO_DEVICE_EVENT_UNKNOWN_FINGERPRINT) {
+        return "NABTO_DEVICE_EVENT_UNKNOWN_FINGERPRINT";
+    } else if (event_ == NABTO_DEVICE_EVENT_WRONG_PRODUCT_ID) {
+        return "NABTO_DEVICE_EVENT_WRONG_PRODUCT_ID";
+    } else if (event_ == NABTO_DEVICE_EVENT_WRONG_DEVICE_ID) {
+        return "";
+    } else {
+        return "";
+    }
+  }
+
+
+//   int getEvent() {
+//     if (event_ == NABTO_DEVICE_EVENT_ATTACHED) {
+//         return 0;
+//     } else if (event_ == NABTO_DEVICE_EVENT_DETACHED) {
+//         return 1;
+//     } else if (event_ == NABTO_DEVICE_EVENT_CLOSED) {
+//         return 2;
+//     } else if (event_ == NABTO_DEVICE_EVENT_UNKNOWN_FINGERPRINT) {
+//         return 3;
+//     } else if (event_ == NABTO_DEVICE_EVENT_WRONG_PRODUCT_ID) {
+//         return 4;
+//     } else if (event_ == NABTO_DEVICE_EVENT_WRONG_DEVICE_ID) {
+//         return 5;
+//     } else {
+//         return -1;
+//     }
+//   }
+
+  NabtoDeviceListener* lis_;
+  NabtoDeviceEvent event_;
 };
 
 using Context = void;
@@ -40,7 +101,10 @@ class NodeNabtoDevice : public Napi::ObjectWrap<NodeNabtoDevice> {
   void SetLogCallback(const Napi::CallbackInfo& info);
   Napi::Value GetConfiguration(const Napi::CallbackInfo& info);
   void SetBasestationAttach(const Napi::CallbackInfo& info);
+  Napi::Value NotifyDeviceEvent(const Napi::CallbackInfo& info);
+  Napi::Value GetCurrentDeviceEvent(const Napi::CallbackInfo& info);
 
   NabtoDevice* nabtoDevice_;
   LogCallbackFunction logCallback_;
+  DeviceEventFutureContext* devEvents_;
 };

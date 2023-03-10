@@ -1,4 +1,4 @@
-import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback } from "../NabtoDevice";
+import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent } from "../NabtoDevice";
 
 var nabto_device = require('bindings')('nabto_device');
 
@@ -67,9 +67,18 @@ export class NabtoDeviceImpl implements NabtoDevice {
     }
 
 
-    private startDeviceEventListener()
+    private async startDeviceEventListener(): Promise<void>
     {
-
+        try {
+            await this.nabtoDevice.notifyDeviceEvent();
+            let ev: DeviceEvent = this.nabtoDevice.getCurrentDeviceEvent();
+            for (let f of this.deviceEventListeners) {
+                f(ev);
+            }
+            return this.startDeviceEventListener();
+        } catch (err) {
+            // TODO: handle... probably just closing down
+        }
     }
 
     private startConnectionEventListener()

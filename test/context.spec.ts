@@ -2,7 +2,7 @@ import 'mocha'
 import { strict as assert } from 'node:assert';
 import chai from 'chai';
 
-import { DeviceOptions, LogMessage, NabtoDevice, NabtoDeviceFactory } from '../src/NabtoDevice/NabtoDevice'
+import { DeviceEvent, DeviceOptions, LogMessage, NabtoDevice, NabtoDeviceFactory } from '../src/NabtoDevice/NabtoDevice'
 
 const expect = chai.expect;
 
@@ -138,7 +138,9 @@ describe('lifecycle', () => {
     let opts: DeviceOptions = {
         productId: "pr-foobar",
         deviceId: "de-foobar",
-        privateKey: key
+        privateKey: key,
+        localPort: 0,
+        p2pPort: 0,
     }
     dev.setOptions(opts);
     dev.setLogLevel("trace");
@@ -150,6 +152,48 @@ describe('lifecycle', () => {
         console.log(`${now.toISOString()} [${logMessage.severity}]: ${logMessage.message}`);
     });
     await dev.start();
+  });
+
+  it('listen for device events', async () => {
+    let key = dev.createPrivateKey();
+    expect(key).to.be.a("string");
+    let opts: DeviceOptions = {
+        productId: "pr-foobar",
+        deviceId: "de-foobar",
+        privateKey: key,
+        localPort: 0,
+        p2pPort: 0,
+//        serverPort: 0
+    }
+    dev.setOptions(opts);
+    dev.setLogLevel("trace");
+    dev.setLogCallback((logMessage: LogMessage) => {
+        let now = new Date();
+        if (logMessage.severity.length < 5) {
+            logMessage.severity += "_"
+        }
+        console.log(`${now.toISOString()} [${logMessage.severity}]: ${logMessage.message}`);
+    });
+    let resolver: (value: Boolean | PromiseLike<Boolean>) => void;
+    let prom = new Promise<Boolean>((res) => {
+        resolver = res;
+    });
+
+    dev.onDeviceEvent(async (ev) => {
+        let success = true;
+        try {
+        expect(ev).to.exist;
+        expect(ev).to.equal(DeviceEvent.UNKNOWN_FINGERPRINT);
+        } catch (err) {
+            console.log(err);
+            success = false;
+        }
+        resolver(success);
+
+    });
+    await dev.start();
+    let res = await prom;
+    expect(res).to.be.true;
   })
 
 });

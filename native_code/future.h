@@ -20,6 +20,7 @@ public:
 
     void arm(bool repeatable) {
         repeatable_ = repeatable;
+        deferred_ = Napi::Promise::Deferred::New(deferred_.Env());
         nabto_device_future_set_callback(future_, FutureContext::futureCallback, this);
     }
 
