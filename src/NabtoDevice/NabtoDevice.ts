@@ -53,6 +53,9 @@ export type DeviceEventCallback = (ev: DeviceEvent) => void;
 
 export interface Connection {
   getClientFingerprint(connectionRef: ConnectionRef): string;
+  isLocal(connectionRef: ConnectionRef): Boolean;
+  isPasswordAuthenticated(connectionRef: ConnectionRef): Boolean;
+  getPasswordAuthenticationUsername(connectionRef: ConnectionRef): string;
 }
 
 export interface NabtoDevice {

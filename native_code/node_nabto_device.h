@@ -83,11 +83,22 @@ class NodeNabtoDevice : public Napi::ObjectWrap<NodeNabtoDevice> {
   void SetLogCallback(const Napi::CallbackInfo& info);
   Napi::Value GetConfiguration(const Napi::CallbackInfo& info);
   void SetBasestationAttach(const Napi::CallbackInfo& info);
+
+  // DEVICE EVENTS
   Napi::Value NotifyDeviceEvent(const Napi::CallbackInfo& info);
   Napi::Value GetCurrentDeviceEvent(const Napi::CallbackInfo& info);
+
+  // CONNECTION EVENTS
   Napi::Value NotifyConnectionEvent(const Napi::CallbackInfo& info);
   Napi::Value GetCurrentConnectionEvent(const Napi::CallbackInfo& info);
   Napi::Value GetCurrentConnectionRef(const Napi::CallbackInfo& info);
+
+  // CONNECTION
+  Napi::Value ConnectionGetClientFingerprint(const Napi::CallbackInfo& info);
+  Napi::Value ConnectionIsLocal(const Napi::CallbackInfo& info);
+  Napi::Value ConnectionIsPasswordAuthenticated(const Napi::CallbackInfo& info);
+  Napi::Value ConnectionGetPasswordAuthUsername(const Napi::CallbackInfo& info);
+
 
   NabtoDevice* nabtoDevice_;
   LogCallbackFunction logCallback_;

@@ -17,24 +17,29 @@ public:
 
 Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func =
-      DefineClass(env,
-                  "NabtoDevice",
-                  {
-                      InstanceMethod("getVersion", &NodeNabtoDevice::GetVersion),
-                      InstanceMethod("setOptions", &NodeNabtoDevice::SetOptions),
-                      InstanceMethod("createPrivateKey", &NodeNabtoDevice::CreatePrivateKey),
-                      InstanceMethod("setLogLevel", &NodeNabtoDevice::SetLogLevel),
-                      InstanceMethod("setLogCallback", &NodeNabtoDevice::SetLogCallback),
-                      InstanceMethod("stop", &NodeNabtoDevice::Stop),
-                      InstanceMethod("start", &NodeNabtoDevice::Start),
-                      InstanceMethod("getConfiguration", &NodeNabtoDevice::GetConfiguration),
-                      InstanceMethod("setBasestationAttach", &NodeNabtoDevice::SetBasestationAttach),
-                      InstanceMethod("notifyDeviceEvent", &NodeNabtoDevice::NotifyDeviceEvent),
-                      InstanceMethod("getCurrentDeviceEvent", &NodeNabtoDevice::GetCurrentDeviceEvent),
-                      InstanceMethod("notifyConnectionEvent", &NodeNabtoDevice::NotifyConnectionEvent),
-                      InstanceMethod("getCurrentConnectionEvent", &NodeNabtoDevice::GetCurrentConnectionEvent),
-                      InstanceMethod("getCurrentConnectionRef", &NodeNabtoDevice::GetCurrentConnectionRef),
-                  });
+    DefineClass(
+      env,
+      "NabtoDevice",
+      {
+        InstanceMethod("getVersion", &NodeNabtoDevice::GetVersion),
+        InstanceMethod("setOptions", &NodeNabtoDevice::SetOptions),
+        InstanceMethod("createPrivateKey", &NodeNabtoDevice::CreatePrivateKey),
+        InstanceMethod("setLogLevel", &NodeNabtoDevice::SetLogLevel),
+        InstanceMethod("setLogCallback", &NodeNabtoDevice::SetLogCallback),
+        InstanceMethod("stop", &NodeNabtoDevice::Stop),
+        InstanceMethod("start", &NodeNabtoDevice::Start),
+        InstanceMethod("getConfiguration", &NodeNabtoDevice::GetConfiguration),
+        InstanceMethod("setBasestationAttach", &NodeNabtoDevice::SetBasestationAttach),
+        InstanceMethod("notifyDeviceEvent", &NodeNabtoDevice::NotifyDeviceEvent),
+        InstanceMethod("getCurrentDeviceEvent", & NodeNabtoDevice::GetCurrentDeviceEvent),
+        InstanceMethod("notifyConnectionEvent", &NodeNabtoDevice::NotifyConnectionEvent),
+        InstanceMethod("getCurrentConnectionEvent", &NodeNabtoDevice::GetCurrentConnectionEvent),
+        InstanceMethod("getCurrentConnectionRef", &NodeNabtoDevice::GetCurrentConnectionRef),
+        InstanceMethod("connectionGetClientFingerprint", &NodeNabtoDevice::ConnectionGetClientFingerprint),
+        InstanceMethod("connectionIsLocal", &NodeNabtoDevice::ConnectionIsLocal),
+        InstanceMethod("connectionIsPasswordAuthenticated", &NodeNabtoDevice::ConnectionIsPasswordAuthenticated),
+        InstanceMethod("connectionGetPasswordAuthUsername", &NodeNabtoDevice::ConnectionGetPasswordAuthUsername),
+      });
 
   Napi::FunctionReference* constructor = new Napi::FunctionReference();
   *constructor = Napi::Persistent(func);
@@ -88,7 +93,6 @@ Napi::Value NodeNabtoDevice::GetVersion(const Napi::CallbackInfo& info) {
 
 void NodeNabtoDevice::SetOptions(const Napi::CallbackInfo& info) {
   int length = info.Length();
-  Napi::Value result;
   if (length <= 0 || !info[0].IsObject() ) {
     Napi::TypeError::New(info.Env(), "Object expected").ThrowAsJavaScriptException();
     return;
@@ -280,7 +284,6 @@ Napi::Value NodeNabtoDevice::CreatePrivateKey(const Napi::CallbackInfo& info) {
 void NodeNabtoDevice::SetBasestationAttach(const Napi::CallbackInfo& info)
 {
   int length = info.Length();
-  Napi::Value result;
   if (length <= 0 || !info[0].IsBoolean() ) {
     Napi::TypeError::New(info.Env(), "Boolean expected").ThrowAsJavaScriptException();
     return;
@@ -333,6 +336,70 @@ Napi::Value NodeNabtoDevice::GetCurrentConnectionRef(const Napi::CallbackInfo& i
   return Napi::Number::New(info.Env(), connEvents_->getConnectionRef());
 }
 
+/*************** CONNECTIONS ************/
+Napi::Value NodeNabtoDevice::ConnectionGetClientFingerprint(const Napi::CallbackInfo& info)
+{
+  int length = info.Length();
+  if (length <= 0 || !info[0].IsNumber() ) {
+    Napi::TypeError::New(info.Env(), "Invalid ConnectionRef").ThrowAsJavaScriptException();
+    return Napi::Value();
+  }
+
+  char* fp;
+  NabtoDeviceError ec = nabto_device_connection_get_client_fingerprint(nabtoDevice_, info[0].ToNumber().Uint32Value(), &fp);
+  if (ec != NABTO_DEVICE_EC_OK) {
+    Napi::TypeError::New(info.Env(), nabto_device_error_get_message(ec)).ThrowAsJavaScriptException();
+    return Napi::Value();
+  }
+  Napi::Value retVal = Napi::String::New(info.Env(), fp);
+  nabto_device_string_free(fp);
+  return retVal;
+}
+
+Napi::Value NodeNabtoDevice::ConnectionIsLocal(const Napi::CallbackInfo& info)
+{
+  int length = info.Length();
+  if (length <= 0 || !info[0].IsNumber() ) {
+    Napi::TypeError::New(info.Env(), "Invalid ConnectionRef").ThrowAsJavaScriptException();
+    return Napi::Value();
+  }
+
+  bool local = nabto_device_connection_is_local(nabtoDevice_, info[0].ToNumber().Uint32Value());
+
+  return Napi::Boolean::New(info.Env(), local);
+}
+
+Napi::Value NodeNabtoDevice::ConnectionIsPasswordAuthenticated(const Napi::CallbackInfo& info)
+{
+  int length = info.Length();
+  if (length <= 0 || !info[0].IsNumber() ) {
+    Napi::TypeError::New(info.Env(), "Invalid ConnectionRef").ThrowAsJavaScriptException();
+    return Napi::Value();
+  }
+
+  bool result = nabto_device_connection_is_password_authenticated(nabtoDevice_, info[0].ToNumber().Uint32Value());
+
+  return Napi::Boolean::New(info.Env(), result);
+}
+
+Napi::Value NodeNabtoDevice::ConnectionGetPasswordAuthUsername(const Napi::CallbackInfo& info)
+{
+  int length = info.Length();
+  if (length <= 0 || !info[0].IsNumber() ) {
+    Napi::TypeError::New(info.Env(), "Invalid ConnectionRef").ThrowAsJavaScriptException();
+    return Napi::Value();
+  }
+
+  char* name;
+  NabtoDeviceError ec = nabto_device_connection_get_password_authentication_username(nabtoDevice_, info[0].ToNumber().Uint32Value(), &name);
+  if (ec != NABTO_DEVICE_EC_OK) {
+    Napi::TypeError::New(info.Env(), nabto_device_error_get_message(ec)).ThrowAsJavaScriptException();
+    return Napi::Value();
+  }
+  Napi::Value retVal = Napi::String::New(info.Env(), name);
+  nabto_device_string_free(name);
+  return retVal;
+}
 
 
 /********* LOGGING ****/

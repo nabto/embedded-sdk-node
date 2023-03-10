@@ -8,7 +8,7 @@ const expect = chai.expect;
 
 const logLevel = env.NABTO_LOG_LEVEL;
 
-describe.only('connect local', () => {
+describe('connect local', () => {
   let dev: NabtoDevice;
   let cli: NabtoClient | undefined;
   let conn: Connection | undefined;
@@ -42,20 +42,23 @@ describe.only('connect local', () => {
   afterEach(async () => {
     // If expect fails in a test, the remaining code is not executed, so to keep tests from hanging we must close connections from here
     if (conn) {
-      await conn.close();
+      // TODO: If conn.close() is not run, cli.stop() should close the connection, and if not, dev.stop() should also do it. However, cli.stop() runs but does not seem to close the connection, and then dev.stop() simply hangs until the test timeout is reached.
+      try {
+        await conn.close();
+      } catch(err) { } // We might already have closed if testing closure
       conn = undefined;
     }
-    dev.stop();
     if (cli) {
       cli.stop();
       cli = undefined;
     }
+    dev.stop();
   });
 
   it('connect', async () => {
     await dev.start();
 
-    let cli = NabtoClientFactory.create();
+    cli = NabtoClientFactory.create();
     let key = cli.createPrivateKey();
     conn = cli.createConnection();
     conn.setOptions({ProductId: "pr-foobar", DeviceId: "de-foobar", Local: true, Remote: false, PrivateKey: key});
@@ -119,10 +122,15 @@ describe.only('connect local', () => {
     let cliFp2 = dev.connection.getClientFingerprint(connRef);
     expect(cliFp2).to.equal(cliFp);
 
+    let isLocal = dev.connection.isLocal(connRef);
+    expect(isLocal).to.be.a("Boolean");
+    expect(isLocal).to.be.true;
+
     await conn.close();
     let res2 = await prom2;
     expect(res2).to.be.true;
   });
 
+  // TODO: test connection.isPassword... and connection.getPasswordAuthUsername when implemented in client
 
 });

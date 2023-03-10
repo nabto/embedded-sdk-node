@@ -2,6 +2,34 @@ import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, Connection
 
 var nabto_device = require('bindings')('nabto_device');
 
+export class ConnectionImpl implements Connection {
+    nabtoDevice: any;
+
+    constructor(dev: any) {
+        this.nabtoDevice = dev;
+    }
+
+    getClientFingerprint(connectionRef: ConnectionRef): string
+    {
+        return this.nabtoDevice.connectionGetClientFingerprint(connectionRef);
+    }
+
+    isLocal(connectionRef: any): Boolean {
+        return this.nabtoDevice.connectionIsLocal(connectionRef);
+    }
+
+    isPasswordAuthenticated(connectionRef: ConnectionRef): Boolean
+    {
+        return this.nabtoDevice.connectionIsPasswordAuthenticated(connectionRef);
+    }
+
+    getPasswordAuthenticationUsername(connectionRef: ConnectionRef): string
+    {
+        return this.nabtoDevice.connectionGetPasswordAuthUsername(connectionRef);
+    }
+
+}
+
 
 export class NabtoDeviceImpl implements NabtoDevice {
     nabtoDevice: any;
@@ -11,6 +39,7 @@ export class NabtoDeviceImpl implements NabtoDevice {
 
     constructor() {
         this.nabtoDevice = new nabto_device.NabtoDevice();
+        this.connection = new ConnectionImpl(this.nabtoDevice)
     }
 
     stop() {
@@ -66,12 +95,7 @@ export class NabtoDeviceImpl implements NabtoDevice {
 
     }
 
-    connection: Connection = {
-        getClientFingerprint(connectionRef: ConnectionRef): string
-        {
-            return "FINGERPRINT";
-        }
-    }
+    connection: Connection;
 
 
     private async startDeviceEventListener(): Promise<void>
