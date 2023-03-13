@@ -90,6 +90,21 @@ describe('lifecycle', () => {
     dev.setOptions(opts);
   });
 
+  it('create/set SCT', () => {
+    let key = dev.createPrivateKey();
+    expect(key).to.be.a("string");
+    let sct = dev.createServerConnectToken();
+    expect(sct).to.be.a("string");
+    let opts: DeviceOptions = {
+        productId: "pr-foobar",
+        deviceId: "de-foobar",
+        privateKey: key,
+    }
+    dev.setOptions(opts);
+    dev.addServerConnectToken(sct);
+    expect(dev.areServerConnectTokensSync()).to.be.true;
+  });
+
   it('set options', () => {
     let key = dev.createPrivateKey();
     expect(key).to.be.a("string");

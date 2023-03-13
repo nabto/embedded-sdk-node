@@ -95,6 +95,30 @@ export class NabtoDeviceImpl implements NabtoDevice {
 
     }
 
+    mdnsAddSubtype(type: string): void
+    {
+        return this.nabtoDevice.mdnsAddSubtype(type);
+    }
+
+    mdnsAddTxtItem(key: string, value: string): void
+    {
+        return this.nabtoDevice.mdnsAddTxtItem(key, value);
+    }
+
+    createServerConnectToken(): string
+    {
+        return this.nabtoDevice.createServerConnectToken();
+    }
+
+    addServerConnectToken(sct: string): void
+    {
+        return this.nabtoDevice.addServerConnectToken(sct);
+    }
+
+    areServerConnectTokensSync(): Boolean
+    {
+        return this.nabtoDevice.areServerConnectTokensSync();
+    }
     connection: Connection;
 
 

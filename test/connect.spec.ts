@@ -131,6 +131,19 @@ describe('connect local', () => {
     expect(res2).to.be.true;
   });
 
-  // TODO: test connection.isPassword... and connection.getPasswordAuthUsername when implemented in client
+  it('mdns subtype and txt items', async () => {
+    dev.mdnsAddSubtype("testtype");
+    dev.mdnsAddTxtItem("foo", "bar");
+    await dev.start();
+
+    cli = NabtoClientFactory.create();
+    let key = cli.createPrivateKey();
+    conn = cli.createConnection();
+    conn.setOptions({ProductId: "pr-foobar", DeviceId: "de-foobar", Local: true, Remote: false, PrivateKey: key});
+    await conn.connect();
+    // TODO: test mDNS from once implemented in client
+  });
+
+  // TODO: test connection.isPasswordAuth and connection.getPasswordAuthUsername when implemented in client
 
 });

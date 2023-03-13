@@ -70,6 +70,11 @@ export interface NabtoDevice {
   setBasestationAttach(enable: Boolean): void;
   onConnectionEvent(fn: ConnectionEventCallback): void;
   onDeviceEvent(fn: DeviceEventCallback): void;
+  mdnsAddSubtype(type: string): void;
+  mdnsAddTxtItem(key: string, value: string): void;
+  createServerConnectToken(): string;
+  addServerConnectToken(sct: string): void;
+  areServerConnectTokensSync(): Boolean;
   connection: Connection;
 
 }

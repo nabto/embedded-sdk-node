@@ -83,6 +83,11 @@ class NodeNabtoDevice : public Napi::ObjectWrap<NodeNabtoDevice> {
   void SetLogCallback(const Napi::CallbackInfo& info);
   Napi::Value GetConfiguration(const Napi::CallbackInfo& info);
   void SetBasestationAttach(const Napi::CallbackInfo& info);
+  void MdnsAddSubtype(const Napi::CallbackInfo& info);
+  void MdnsAddTxtItem(const Napi::CallbackInfo& info);
+  Napi::Value CreateServerConnectToken(const Napi::CallbackInfo& info);
+  void AddServerConnectToken(const Napi::CallbackInfo& info);
+  Napi::Value AreServerConnectTokensSync(const Napi::CallbackInfo& info);
 
   // DEVICE EVENTS
   Napi::Value NotifyDeviceEvent(const Napi::CallbackInfo& info);

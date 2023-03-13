@@ -39,6 +39,11 @@ Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
         InstanceMethod("connectionIsLocal", &NodeNabtoDevice::ConnectionIsLocal),
         InstanceMethod("connectionIsPasswordAuthenticated", &NodeNabtoDevice::ConnectionIsPasswordAuthenticated),
         InstanceMethod("connectionGetPasswordAuthUsername", &NodeNabtoDevice::ConnectionGetPasswordAuthUsername),
+        InstanceMethod("mdnsAddSubtype", &NodeNabtoDevice::MdnsAddSubtype),
+        InstanceMethod("mdnsAddTxtItem", &NodeNabtoDevice::MdnsAddTxtItem),
+        InstanceMethod("createServerConnectToken", &NodeNabtoDevice::CreateServerConnectToken),
+        InstanceMethod("addServerConnectToken", &NodeNabtoDevice::AddServerConnectToken),
+        InstanceMethod("areServerConnectTokensSync", &NodeNabtoDevice::AreServerConnectTokensSync),
       });
 
   Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -296,6 +301,76 @@ void NodeNabtoDevice::SetBasestationAttach(const Napi::CallbackInfo& info)
   }
 }
 
+/************ MDNS *********/
+void NodeNabtoDevice::MdnsAddSubtype(const Napi::CallbackInfo& info)
+{
+  int length = info.Length();
+  if (length <= 0 || !info[0].IsString() ) {
+    Napi::TypeError::New(info.Env(), "String expected").ThrowAsJavaScriptException();
+    return;
+  }
+
+  NabtoDeviceError ec = nabto_device_mdns_add_subtype(nabtoDevice_, info[0].ToString().Utf8Value().c_str());
+  if (ec != NABTO_DEVICE_EC_OK) {
+    Napi::TypeError::New(info.Env(), nabto_device_error_get_message(ec)).ThrowAsJavaScriptException();
+    return;
+  }
+}
+
+void NodeNabtoDevice::MdnsAddTxtItem(const Napi::CallbackInfo& info)
+{
+  int length = info.Length();
+  if (length <= 1 || !info[0].IsString() || !info[1].IsString() ) {
+    Napi::TypeError::New(info.Env(), "2 Strings expected").ThrowAsJavaScriptException();
+    return;
+  }
+
+  NabtoDeviceError ec = nabto_device_mdns_add_txt_item(nabtoDevice_, info[0].ToString().Utf8Value().c_str(), info[1].ToString().Utf8Value().c_str());
+  if (ec != NABTO_DEVICE_EC_OK) {
+    Napi::TypeError::New(info.Env(), nabto_device_error_get_message(ec)).ThrowAsJavaScriptException();
+    return;
+  }
+}
+
+/************ SCT *********/
+
+Napi::Value NodeNabtoDevice::CreateServerConnectToken(const Napi::CallbackInfo& info) {
+  char* sct;
+
+  NabtoDeviceError ec = nabto_device_create_server_connect_token(nabtoDevice_, &sct);
+  if (ec != NABTO_DEVICE_EC_OK) {
+    Napi::TypeError::New(info.Env(), nabto_device_error_get_message(ec)).ThrowAsJavaScriptException();
+    return Napi::Value();
+  }
+  Napi::Value retVal = Napi::String::New(info.Env(), sct);
+  nabto_device_string_free(sct);
+  return retVal;
+}
+
+void NodeNabtoDevice::AddServerConnectToken(const Napi::CallbackInfo& info)
+{
+  int length = info.Length();
+  if (length <= 0 || !info[0].IsString() ) {
+    Napi::TypeError::New(info.Env(), "String expected").ThrowAsJavaScriptException();
+    return;
+  }
+
+  NabtoDeviceError ec = nabto_device_add_server_connect_token(nabtoDevice_, info[0].ToString().Utf8Value().c_str());
+  if (ec != NABTO_DEVICE_EC_OK) {
+    Napi::TypeError::New(info.Env(), nabto_device_error_get_message(ec)).ThrowAsJavaScriptException();
+    return;
+  }
+}
+
+Napi::Value NodeNabtoDevice::AreServerConnectTokensSync(const Napi::CallbackInfo& info)
+{
+  NabtoDeviceError ec = nabto_device_are_server_connect_tokens_synchronized(nabtoDevice_);
+
+  if (ec != NABTO_DEVICE_EC_OK) {
+    return Napi::Boolean::New(info.Env(), false);
+  }
+  return Napi::Boolean::New(info.Env(), true);
+}
 
 
 /************ DEVICE EVENTS *********/
