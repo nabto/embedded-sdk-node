@@ -44,6 +44,8 @@ Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
         InstanceMethod("createServerConnectToken", &NodeNabtoDevice::CreateServerConnectToken),
         InstanceMethod("addServerConnectToken", &NodeNabtoDevice::AddServerConnectToken),
         InstanceMethod("areServerConnectTokensSync", &NodeNabtoDevice::AreServerConnectTokensSync),
+        InstanceMethod("addTcpTunnelService", &NodeNabtoDevice::AddTcpTunnelService),
+        InstanceMethod("removeTcpTunnelService", &NodeNabtoDevice::RemoveTcpTunnelService),
       });
 
   Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -476,6 +478,73 @@ Napi::Value NodeNabtoDevice::ConnectionGetPasswordAuthUsername(const Napi::Callb
   return retVal;
 }
 
+/********** TUNNELS ********/
+void NodeNabtoDevice::AddTcpTunnelService(const Napi::CallbackInfo& info)
+{
+    Napi::Env env = info.Env();
+
+    int length = info.Length();
+    if (length < 4)
+    {
+        Napi::TypeError::New(env, "Expected 4 arguments: serviceId, serviceType, host, port").ThrowAsJavaScriptException();
+        return;
+    }
+    Napi::Value id = info[0];
+    Napi::Value type = info[1];
+    Napi::Value host = info[2];
+    Napi::Value port = info[3];
+
+    if(!id.IsString()) {
+         Napi::TypeError::New(env, "First arg expected serviceId string").ThrowAsJavaScriptException();
+        return;
+    }
+    if(!type.IsString()) {
+         Napi::TypeError::New(env, "Second arg expected serviceType string").ThrowAsJavaScriptException();
+        return;
+    }
+    if(!host.IsString()) {
+         Napi::TypeError::New(env, "Third arg expected host string").ThrowAsJavaScriptException();
+        return;
+    }
+    if(!port.IsNumber()) {
+         Napi::TypeError::New(env, "Fourth arg expected port number").ThrowAsJavaScriptException();
+        return;
+    }
+    NabtoDeviceError ec = nabto_device_add_tcp_tunnel_service(
+      nabtoDevice_,
+      id.ToString().Utf8Value().c_str(),
+      type.ToString().Utf8Value().c_str(),
+      host.ToString().Utf8Value().c_str(),
+      port.ToNumber().Uint32Value());
+    if (ec != NABTO_DEVICE_EC_OK) {
+        Napi::TypeError::New(info.Env(), nabto_device_error_get_message(ec)).ThrowAsJavaScriptException();
+        return;
+    }
+}
+
+void NodeNabtoDevice::RemoveTcpTunnelService(const Napi::CallbackInfo& info)
+{
+    Napi::Env env = info.Env();
+
+    int length = info.Length();
+    if (length < 1)
+    {
+        Napi::TypeError::New(env, "Expected 1 arguments: serviceId").ThrowAsJavaScriptException();
+        return;
+    }
+    Napi::Value id = info[0];
+    if(!id.IsString()) {
+         Napi::TypeError::New(env, "First arg expected serviceId string").ThrowAsJavaScriptException();
+        return;
+    }
+    NabtoDeviceError ec = nabto_device_remove_tcp_tunnel_service(
+      nabtoDevice_,
+      id.ToString().Utf8Value().c_str());
+    if (ec != NABTO_DEVICE_EC_OK) {
+        Napi::TypeError::New(info.Env(), nabto_device_error_get_message(ec)).ThrowAsJavaScriptException();
+        return;
+    }
+}
 
 /********* LOGGING ****/
 void NodeNabtoDevice::SetLogLevel(const Napi::CallbackInfo& info)

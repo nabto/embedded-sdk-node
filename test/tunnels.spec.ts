@@ -3,6 +3,7 @@ import chai from 'chai';
 import { env } from 'process';
 import { Connection, NabtoClient, NabtoClientFactory } from '../../edge-client-node/src/NabtoClient/NabtoClient'
 import { AuthorizationRequest, DeviceOptions, LogMessage, NabtoDevice, NabtoDeviceFactory } from '../src/NabtoDevice/NabtoDevice';
+import { decode } from 'cbor-x';
 
 const expect = chai.expect;
 
@@ -81,6 +82,62 @@ describe('tunnels', () => {
     expect(coapResp.getResponseStatusCode()).to.equal(205);
     expect(coapResp.getResponseContentFormat()).to.equal(60);
     expect(called).to.be.true;
+  });
+
+  it('add/remove services', async () => {
+    let called = 0;
+    dev.onAuthorizationRequest((req: AuthorizationRequest) => {
+        let action = req.getAction();
+        expect(action).to.equal("TcpTunnel:ListServices");
+        let ref = req.getConnectionRef();
+        expect(ref).to.exist.and.be.a("Number");
+        let att = req.getAttributes();
+        let keys = Object.keys(att);
+        expect(keys).to.be.an('Array').and.have.length(0);
+
+        req.verdict(true);
+        called++;
+    });
+    await dev.start();
+    cli = NabtoClientFactory.create();
+    let key = cli.createPrivateKey();
+    conn = cli.createConnection();
+    conn.setOptions({ProductId: "pr-foobar", DeviceId: "de-foobar", Local: true, Remote: false, PrivateKey: key});
+    await conn.connect();
+
+    { // REQ 1
+        const coapReq = conn.createCoapRequest("GET", '/tcp-tunnels/services');
+        const coapResp = await coapReq.execute();
+        expect(coapResp.getResponseStatusCode()).to.equal(205);
+        expect(coapResp.getResponseContentFormat()).to.equal(60);
+        let payload = coapResp.getResponsePayload();
+        let services = decode(Buffer.from(payload));
+        expect(services).to.be.an('Array').and.have.length(0);
+    }
+
+    dev.addTcpTunnelService("foo", "bar", "127.0.0.1", 8080);
+    { // REQ 2
+        const coapReq = conn.createCoapRequest("GET", '/tcp-tunnels/services');
+        const coapResp = await coapReq.execute();
+        expect(coapResp.getResponseStatusCode()).to.equal(205);
+        expect(coapResp.getResponseContentFormat()).to.equal(60);
+        let payload = coapResp.getResponsePayload();
+        let services = decode(Buffer.from(payload));
+        expect(services).to.be.an('Array').and.have.length(1);
+        expect(services[0]).to.equal("foo");
+    }
+
+    dev.removeTcpTunnelService("foo");
+    { // REQ 3
+        const coapReq = conn.createCoapRequest("GET", '/tcp-tunnels/services');
+        const coapResp = await coapReq.execute();
+        expect(coapResp.getResponseStatusCode()).to.equal(205);
+        expect(coapResp.getResponseContentFormat()).to.equal(60);
+        let payload = coapResp.getResponsePayload();
+        let services = decode(Buffer.from(payload));
+        expect(services).to.be.an('Array').and.have.length(0);
+    }
+    expect(called).to.equal(3);
   });
 
 });

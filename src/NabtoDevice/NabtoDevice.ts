@@ -110,6 +110,9 @@ export interface NabtoDevice {
 
   addCoapEndpoint(method: CoapMethod, path: string, cb: CoapRequestCallback): void;
 
+  addTcpTunnelService(serviceId: string, serviceType: string, host: string, port: number): void;
+  removeTcpTunnelService(serviceId: string): void;
+
   connection: Connection;
 
 }

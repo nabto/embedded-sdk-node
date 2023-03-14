@@ -106,6 +106,10 @@ class NodeNabtoDevice : public Napi::ObjectWrap<NodeNabtoDevice> {
   Napi::Value ConnectionIsPasswordAuthenticated(const Napi::CallbackInfo& info);
   Napi::Value ConnectionGetPasswordAuthUsername(const Napi::CallbackInfo& info);
 
+  // TUNNELS
+  void AddTcpTunnelService(const Napi::CallbackInfo& info);
+  void RemoveTcpTunnelService(const Napi::CallbackInfo& info);
+
 
   NabtoDevice* nabtoDevice_;
   LogCallbackFunction logCallback_;

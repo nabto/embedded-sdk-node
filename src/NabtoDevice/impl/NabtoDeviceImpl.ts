@@ -144,6 +144,16 @@ export class NabtoDeviceImpl implements NabtoDevice {
         this.coapEndpoints.push(new CoapEndpointHandler(this.nabtoDevice, method, path, cb));
     }
 
+    addTcpTunnelService(serviceId: string, serviceType: string, host: string, port: number): void
+    {
+        return this.nabtoDevice.addTcpTunnelService(serviceId, serviceType, host, port);
+    }
+
+    removeTcpTunnelService(serviceId: string): void
+    {
+        return this.nabtoDevice.removeTcpTunnelService(serviceId);
+    }
+
     connection: Connection;
 
 
