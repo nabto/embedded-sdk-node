@@ -1,4 +1,4 @@
-import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent, ConnectionRef, Connection, CoapMethod, CoapRequestCallback, CoapRequest } from "../NabtoDevice";
+import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent, ConnectionRef, Connection, CoapMethod, CoapRequestCallback, CoapRequest, AuthorizationRequestCallback, AuthorizationRequest } from "../NabtoDevice";
 
 var nabto_device = require('bindings')('nabto_device');
 
@@ -37,6 +37,7 @@ export class NabtoDeviceImpl implements NabtoDevice {
     connectionEventListeners: ConnectionEventCallback[] = [];
     deviceEventListeners: DeviceEventCallback[] = [];
     coapEndpoints: CoapEndpointHandler[] = [];
+    authHandler: AuthRequestHandler | undefined;
 
     constructor() {
         this.nabtoDevice = new nabto_device.NabtoDevice();
@@ -49,6 +50,10 @@ export class NabtoDeviceImpl implements NabtoDevice {
             e.stop();
         }
         this.coapEndpoints = [];
+        if (this.authHandler){
+            this.authHandler.stop();
+        }
+        this.authHandler = undefined;
     }
 
     start(): Promise<void> {
@@ -98,6 +103,15 @@ export class NabtoDeviceImpl implements NabtoDevice {
             this.startDeviceEventListener();
         }
 
+    }
+
+    onAuthorizationRequest(fn: AuthorizationRequestCallback): void {
+        if (this.authHandler == undefined) {
+            // Not currently listening
+            this.authHandler = new AuthRequestHandler(this.nabtoDevice, fn);
+        } else {
+            throw new Error("Multiple Authorization request listeners are not allowed");
+        }
     }
 
     mdnsAddSubtype(type: string): void
@@ -245,4 +259,67 @@ export class CoapRequestImpl implements CoapRequest {
         return this.req.responseReady();
     }
 
+}
+
+export class AuthRequestHandler
+{
+    nabtoDevice: any;
+    auth: any;
+
+    cb: AuthorizationRequestCallback;
+
+    constructor(device: any, cb: AuthorizationRequestCallback)
+    {
+        this.nabtoDevice = device;
+        this.cb = cb;
+        this.auth = new nabto_device.AuthHandler(device);
+        this.nextReq();
+    }
+
+    stop(): void {
+        this.auth.stop();
+    }
+
+    async nextReq(): Promise<void>
+    {
+        try {
+            await this.auth.notifyRequest();
+            let nativeReq = this.auth.getCurrentRequest();
+            let req = new AuthorizationRequestImpl(nativeReq);
+            this.cb(req);
+            this.nextReq();
+        } catch (err) {
+            // TODO: handle... probably just closing down
+        }
+
+    }
+}
+
+export class AuthorizationRequestImpl implements AuthorizationRequest {
+    req: any;
+
+    constructor(nativeReq: any)
+    {
+        this.req = new nabto_device.AuthRequest(nativeReq);
+    }
+
+    verdict(allowed: Boolean): void
+    {
+        return this.req.verdict(allowed);
+    }
+
+    getAction(): string
+    {
+        return this.req.getAction();
+    }
+
+    getConnectionRef(): ConnectionRef
+    {
+        return this.req.getConnectionRef();
+    }
+
+    getAttributes(): {[key: string]: string}
+    {
+        return this.req.getAttributes();
+    }
 }

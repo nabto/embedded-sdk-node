@@ -78,6 +78,15 @@ export interface Connection {
   getPasswordAuthenticationUsername(connectionRef: ConnectionRef): string;
 }
 
+export interface AuthorizationRequest {
+  verdict(allowed: Boolean): void;
+  getAction(): string;
+  getConnectionRef(): ConnectionRef;
+  getAttributes(): {[key: string]: string};
+}
+
+export type AuthorizationRequestCallback = (req: AuthorizationRequest) => void;
+
 export interface NabtoDevice {
   stop(): void;
   start(): Promise<void>;
@@ -88,8 +97,11 @@ export interface NabtoDevice {
   setLogCallback(callback: (logMessage: LogMessage) => void): void;
   getConfiguration() : DeviceConfiguration;
   setBasestationAttach(enable: Boolean): void;
+
   onConnectionEvent(fn: ConnectionEventCallback): void;
   onDeviceEvent(fn: DeviceEventCallback): void;
+  onAuthorizationRequest(fn: AuthorizationRequestCallback): void;
+
   mdnsAddSubtype(type: string): void;
   mdnsAddTxtItem(key: string, value: string): void;
   createServerConnectToken(): string;
