@@ -4,10 +4,40 @@ import { env } from 'process';
 import { Connection, NabtoClient, NabtoClientFactory } from '../../edge-client-node/src/NabtoClient/NabtoClient'
 import { AuthorizationRequest, DeviceOptions, LogMessage, NabtoDevice, NabtoDeviceFactory } from '../src/NabtoDevice/NabtoDevice';
 import { decode } from 'cbor-x';
+import express, {Request, Response, NextFunction} from 'express';
+import { randomInt } from 'crypto';
+
+// Workaround for https://github.com/DefinitelyTyped/DefinitelyTyped/issues/60924 to avoid using node-fetch as this would not import properly due to some esm crap
+//@ts-ignore
+const fetch = globalThis.fetch
 
 const expect = chai.expect;
 
 const logLevel = env.NABTO_LOG_LEVEL;
+
+class TestHttpApi {
+    app: any;
+    port: number;
+    server: any;
+
+    constructor(port: number) {
+        this.app = express();
+        this.port = port;
+
+        this.app.get('/hello', (req: Request, res: Response, next: NextFunction) => {
+            res.status(200).json("Hello good sir!");
+        });
+
+        this.server = this.app.listen(port, () => {
+//            console.log("express listening on port: ", port);
+        });
+    }
+
+    stop() {
+        this.server.close();
+    }
+
+}
 
 describe('tunnels', () => {
   let dev: NabtoDevice;
@@ -138,6 +168,34 @@ describe('tunnels', () => {
         expect(services).to.be.an('Array').and.have.length(0);
     }
     expect(called).to.equal(3);
+  });
+
+
+  it('open tunnel', async () => {
+    let port = randomInt(8000, 65000);
+    let cliLocalPort = randomInt(8000, 65000);
+    dev.onAuthorizationRequest((req: AuthorizationRequest) => {
+        req.verdict(true);
+    });
+    dev.addTcpTunnelService("http", "http", "127.0.0.1", port);
+    let http = new TestHttpApi(port);
+    await dev.start();
+    cli = NabtoClientFactory.create();
+    let key = cli.createPrivateKey();
+    conn = cli.createConnection();
+    conn.setOptions({ProductId: "pr-foobar", DeviceId: "de-foobar", Local: true, Remote: false, PrivateKey: key});
+    await conn.connect();
+    let tunnel = conn.createTCPTunnel();
+    await tunnel.open("http", cliLocalPort);
+
+    const response = await fetch(`http://127.0.0.1:${cliLocalPort}/hello`);
+    const data = await response.json();
+    expect(data).to.exist;
+    expect(data).to.be.a("String");
+    expect(data).to.equal("Hello good sir!");
+
+    await tunnel.close();
+    http.stop();
   });
 
 });
