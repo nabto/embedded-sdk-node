@@ -4,6 +4,15 @@ NodeJs wrapper for the Nabto Embedded SDK
 
 ## usage
 
+Currently tests rely on the edge-client-node repo being checkout in the same sandbox as this repo. (see Implementation Todos below)
+
+```
+cd ../
+git clone git@github.com:nabto/edge-client-node.git
+cd embedded-sdk-node
+```
+
+Then use
 ```
 npm install
 npm run install
@@ -36,3 +45,4 @@ This list contains implementation TODOs which does not fit as a comment in the c
  * Include Nabto Client as submodule instead of relying on a local checkout
  * CI
  * Attached/remote tests
+ * When stopping, coap/authReq listeners cause node to hang for a few sec until the garbage collector cleans it up.
