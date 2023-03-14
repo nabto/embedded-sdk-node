@@ -45,11 +45,31 @@ export enum DeviceEvent {
   WRONG_DEVICE_ID = "NABTO_DEVICE_EVENT_WRONG_DEVICE_ID",
 }
 
+export enum CoapMethod {
+  GET = "NABTO_DEVICE_COAP_GET",
+  POST = "NABTO_DEVICE_COAP_POST",
+  PUT = "NABTO_DEVICE_COAP_PUT",
+  DELETE = "NABTO_DEVICE_COAP_DELETE",
+}
+
 export type ConnectionRef = any;
 
 export type ConnectionEventCallback = (ev: ConnectionEvent, connectionRef: ConnectionRef) => void;
 
 export type DeviceEventCallback = (ev: DeviceEvent) => void;
+
+export interface CoapRequest {
+  getFormat(): Number;
+  getPayload(): ArrayBuffer;
+  getConnectionRef(): ConnectionRef;
+  getParameter(parameterName: string): string;
+  sendErrorResponse(code: Number, message: string): void;
+  setResponseCode(code: Number): void;
+  setResponsePayload(format: Number, payload: ArrayBuffer): void;
+  responseReady(): void;
+}
+
+export type CoapRequestCallback = (req: CoapRequest) => void;
 
 export interface Connection {
   getClientFingerprint(connectionRef: ConnectionRef): string;
@@ -75,6 +95,9 @@ export interface NabtoDevice {
   createServerConnectToken(): string;
   addServerConnectToken(sct: string): void;
   areServerConnectTokensSync(): Boolean;
+
+  addCoapEndpoint(method: CoapMethod, path: string, cb: CoapRequestCallback): void;
+
   connection: Connection;
 
 }

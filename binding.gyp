@@ -8,6 +8,7 @@
       ],
       "sources": [ "native_code/nabto_device.cc",
                   "native_code/node_nabto_device.cc",
+                  "native_code/coap.cc",
                 ],
       'link_settings': {
         'libraries': [

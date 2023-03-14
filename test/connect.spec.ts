@@ -1,6 +1,6 @@
 import 'mocha'
 import chai from 'chai';
-import { ConnectionEvent, DeviceOptions, LogMessage, NabtoDevice, NabtoDeviceFactory } from '../src/NabtoDevice/NabtoDevice';
+import { CoapMethod, CoapRequest, ConnectionEvent, DeviceOptions, LogMessage, NabtoDevice, NabtoDeviceFactory } from '../src/NabtoDevice/NabtoDevice';
 import { env } from 'process';
 import { Connection, NabtoClient, NabtoClientFactory } from '../../edge-client-node/src/NabtoClient/NabtoClient'
 
@@ -145,5 +145,93 @@ describe('connect local', () => {
   });
 
   // TODO: test connection.isPasswordAuth and connection.getPasswordAuthUsername when implemented in client
+
+  it('register coap ep', async () => {
+    dev.addCoapEndpoint(CoapMethod.GET, '/hello/world', (req: CoapRequest) => {
+
+    });
+    await dev.start();
+  });
+
+  it('get coap request', async () => {
+    let data = "Hello world";
+    let path = '/hello/world';
+    dev.addCoapEndpoint(CoapMethod.GET, path, (req: CoapRequest) => {
+      try {
+        req.getFormat();
+      } catch(err) {
+        expect(err).to.exist; // content not set in get req.
+      }
+
+      let ref = req.getConnectionRef();
+      expect(ref).to.exist.and.be.a("Number");
+
+      req.setResponseCode(205);
+      let buf = new ArrayBuffer(data.length);
+      let bufView = new Uint8Array(buf);
+      for (let i = 0; i < data.length; i ++) {
+        bufView[i] = data.charCodeAt(i);
+      }
+      req.setResponsePayload(0, buf);
+      req.responseReady();
+    });
+    await dev.start();
+    cli = NabtoClientFactory.create();
+    let key = cli.createPrivateKey();
+    conn = cli.createConnection();
+    conn.setOptions({ProductId: "pr-foobar", DeviceId: "de-foobar", Local: true, Remote: false, PrivateKey: key});
+    await conn.connect();
+    const coapReq = conn.createCoapRequest("GET", path);
+    const coapResp = await coapReq.execute();
+
+    expect(coapResp.getResponseStatusCode()).to.equal(205);
+    expect(coapResp.getResponseContentFormat()).to.equal(0);
+    expect((Buffer.from(coapResp.getResponsePayload())).toString('utf8')).to.equal(data);
+  });
+
+  it('post coap request', async () => {
+    let data = "Hello world";
+    let path = '/hello/{planet}';
+    let called = false;
+    dev.addCoapEndpoint(CoapMethod.POST, path, (req: CoapRequest) => {
+      called = true;
+      let format = req.getFormat();
+      expect(format).to.equal(0);
+
+      let param = req.getParameter("planet");
+      expect(param).to.exist.and.equal("world");
+
+      let payload = req.getPayload();
+      expect((Buffer.from(payload)).toString('utf8')).to.equal(data);
+
+      req.setResponseCode(200);
+      let buf = new ArrayBuffer(data.length);
+      let bufView = new Uint8Array(buf);
+      for (let i = 0; i < data.length; i ++) {
+        bufView[i] = data.charCodeAt(i);
+      }
+      req.setResponsePayload(0, buf);
+      req.responseReady();
+    });
+    await dev.start();
+    cli = NabtoClientFactory.create();
+    let key = cli.createPrivateKey();
+    conn = cli.createConnection();
+    conn.setOptions({ProductId: "pr-foobar", DeviceId: "de-foobar", Local: true, Remote: false, PrivateKey: key});
+    await conn.connect();
+    const coapReq = conn.createCoapRequest("POST", '/hello/world');
+    let buf = new ArrayBuffer(data.length);
+    let bufView = new Uint8Array(buf);
+    for (let i = 0; i < data.length; i ++) {
+      bufView[i] = data.charCodeAt(i);
+    }
+    coapReq.setRequestPayload(0, buf);
+    const coapResp = await coapReq.execute();
+
+    expect(coapResp.getResponseStatusCode()).to.equal(200);
+    expect(coapResp.getResponseContentFormat()).to.equal(0);
+    expect((Buffer.from(coapResp.getResponsePayload())).toString('utf8')).to.equal(data);
+    expect(called).to.be.true;
+  });
 
 });

@@ -12,10 +12,16 @@ class ConnectionEventFutureContext: public FutureContext
   {
     lis_ = nabto_device_listener_new(device_);
     NabtoDeviceError ec = nabto_device_connection_events_init_listener(device_, lis_);
-    // TODO: error handling
+    if (ec != NABTO_DEVICE_EC_OK) {
+      // TODO: error handling
+    }
 
     nabto_device_listener_connection_event(lis_, future_, &ref_, &event_);
     arm(true);
+  }
+
+  ~ConnectionEventFutureContext() {
+    nabto_device_listener_free(lis_);
   }
 
   void rearm() {

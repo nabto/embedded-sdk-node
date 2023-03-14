@@ -1,4 +1,4 @@
-import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent, ConnectionRef, Connection } from "../NabtoDevice";
+import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent, ConnectionRef, Connection, CoapMethod, CoapRequestCallback, CoapRequest } from "../NabtoDevice";
 
 var nabto_device = require('bindings')('nabto_device');
 
@@ -36,6 +36,7 @@ export class NabtoDeviceImpl implements NabtoDevice {
 
     connectionEventListeners: ConnectionEventCallback[] = [];
     deviceEventListeners: DeviceEventCallback[] = [];
+    coapEndpoints: CoapEndpointHandler[] = [];
 
     constructor() {
         this.nabtoDevice = new nabto_device.NabtoDevice();
@@ -44,6 +45,10 @@ export class NabtoDeviceImpl implements NabtoDevice {
 
     stop() {
         this.nabtoDevice.stop();
+        for (let e of this.coapEndpoints) {
+            e.stop();
+        }
+        this.coapEndpoints = [];
     }
 
     start(): Promise<void> {
@@ -119,6 +124,12 @@ export class NabtoDeviceImpl implements NabtoDevice {
     {
         return this.nabtoDevice.areServerConnectTokensSync();
     }
+
+    addCoapEndpoint(method: CoapMethod, path: string, cb: CoapRequestCallback): void
+    {
+        this.coapEndpoints.push(new CoapEndpointHandler(this.nabtoDevice, method, path, cb));
+    }
+
     connection: Connection;
 
 
@@ -150,4 +161,88 @@ export class NabtoDeviceImpl implements NabtoDevice {
             // TODO: handle... probably just closing down
         }
     }
+}
+
+export class CoapEndpointHandler
+{
+    nabtoDevice: any;
+    ep: any;
+
+    cb: CoapRequestCallback;
+
+    constructor(device: any, method: CoapMethod, path: string, cb: CoapRequestCallback)
+    {
+        this.nabtoDevice = device;
+        this.cb = cb;
+        this.ep = new nabto_device.CoapEndpoint(device, method, path);
+        this.nextReq();
+    }
+
+    stop(): void {
+        this.ep.stop();
+    }
+
+    async nextReq(): Promise<void>
+    {
+        try {
+            await this.ep.notifyRequest();
+            let nativeReq = this.ep.getCurrentRequest();
+            let req = new CoapRequestImpl(nativeReq);
+            this.cb(req);
+            this.nextReq();
+        } catch (err) {
+            // TODO: handle... probably just closing down
+        }
+
+    }
+}
+
+export class CoapRequestImpl implements CoapRequest {
+    req: any;
+
+    constructor(nativeReq: any)
+    {
+        this.req = new nabto_device.CoapRequest(nativeReq);
+    }
+
+    getFormat(): Number
+    {
+        return this.req.getFormat();
+    }
+
+    getPayload(): ArrayBuffer
+    {
+        return this.req.getPayload();
+    }
+
+    getConnectionRef(): ConnectionRef
+    {
+        return this.req.getConnectionRef();
+    }
+
+    getParameter(parameterName: string): string
+    {
+        return this.req.getParameter(parameterName);
+    }
+
+    sendErrorResponse(code: Number, message: string): void
+    {
+        return this.req.sendErrorResponse(code, message);
+    }
+
+    setResponseCode(code: Number): void
+    {
+        return this.req.setResponseCode(code);
+    }
+
+    setResponsePayload(format: Number, payload: ArrayBuffer): void
+    {
+        return this.req.setResponsePayload(format, payload);
+    }
+
+    responseReady(): void
+    {
+        return this.req.responseReady();
+    }
+
 }
