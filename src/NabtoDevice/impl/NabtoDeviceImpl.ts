@@ -1,6 +1,18 @@
-import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent, ConnectionRef, Connection, CoapMethod, CoapRequestCallback, CoapRequest, AuthorizationRequestCallback, AuthorizationRequest } from "../NabtoDevice";
+import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent, ConnectionRef, Connection, CoapMethod, CoapRequestCallback, CoapRequest, AuthorizationRequestCallback, AuthorizationRequest, Experimental } from "../NabtoDevice";
 
 var nabto_device = require('bindings')('nabto_device');
+
+export class ExperimentalImpl implements Experimental {
+    nabtoDevice: any;
+
+    constructor(dev: any) {
+        this.nabtoDevice = dev;
+    }
+
+    setRawPrivateKey(key: string): void {
+        this.nabtoDevice.setRawPrivateKey(key);
+    }
+}
 
 export class ConnectionImpl implements Connection {
     nabtoDevice: any;
@@ -41,7 +53,8 @@ export class NabtoDeviceImpl implements NabtoDevice {
 
     constructor() {
         this.nabtoDevice = new nabto_device.NabtoDevice();
-        this.connection = new ConnectionImpl(this.nabtoDevice)
+        this.connection = new ConnectionImpl(this.nabtoDevice);
+        this.experimental = new ExperimentalImpl(this.nabtoDevice);
     }
 
     stop() {
@@ -155,6 +168,7 @@ export class NabtoDeviceImpl implements NabtoDevice {
     }
 
     connection: Connection;
+    experimental: Experimental;
 
 
     private async startDeviceEventListener(): Promise<void>

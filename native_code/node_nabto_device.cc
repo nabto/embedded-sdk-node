@@ -2,8 +2,11 @@
 #include "future.h"
 
 #include <nabto/nabto_device.h>
+#include <nabto/nabto_device_experimental.h>
 
 #include <iostream>
+
+std::vector<uint8_t> bytesFromHex(std::string hex);
 
 class StartFutureContext : public FutureContext
 {
@@ -46,6 +49,7 @@ Napi::Object NodeNabtoDevice::Init(Napi::Env env, Napi::Object exports) {
         InstanceMethod("areServerConnectTokensSync", &NodeNabtoDevice::AreServerConnectTokensSync),
         InstanceMethod("addTcpTunnelService", &NodeNabtoDevice::AddTcpTunnelService),
         InstanceMethod("removeTcpTunnelService", &NodeNabtoDevice::RemoveTcpTunnelService),
+        InstanceMethod("setRawPrivateKey", &NodeNabtoDevice::SetRawPrivateKey),
       });
 
   Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -546,6 +550,33 @@ void NodeNabtoDevice::RemoveTcpTunnelService(const Napi::CallbackInfo& info)
     }
 }
 
+/********** EXPERIMENTAL ******/
+void NodeNabtoDevice::SetRawPrivateKey(const Napi::CallbackInfo& info)
+{
+    Napi::Env env = info.Env();
+
+    int length = info.Length();
+    if (length < 1)
+    {
+        Napi::TypeError::New(env, "Expected 1 arguments: key").ThrowAsJavaScriptException();
+        return;
+    }
+    Napi::Value key = info[0];
+    if(!key.IsString()) {
+         Napi::TypeError::New(env, "First arg expected key string").ThrowAsJavaScriptException();
+        return;
+    }
+    std::vector<uint8_t> rawKey = bytesFromHex(key.ToString().Utf8Value());
+
+    NabtoDeviceError ec = nabto_device_set_private_key_secp256r1(
+      nabtoDevice_, rawKey.data(), rawKey.size());
+    if (ec != NABTO_DEVICE_EC_OK) {
+        Napi::TypeError::New(info.Env(), nabto_device_error_get_message(ec)).ThrowAsJavaScriptException();
+        return;
+    }
+
+}
+
 /********* LOGGING ****/
 void NodeNabtoDevice::SetLogLevel(const Napi::CallbackInfo& info)
 {
@@ -605,3 +636,26 @@ void NodeNabtoDevice::SetLogCallback(const Napi::CallbackInfo& info)
 }
 
 
+uint8_t byteFromChar(char c)
+{
+  if (c >= '0' && c <= '9')
+    return (c - '0');
+  else if (c >= 'A' && c <= 'F')
+    return (10 + (c - 'A'));
+  else if (c >= 'a' && c <= 'f')
+    return (10 + (c - 'a'));
+  else
+    return 0;
+}
+
+std::vector<uint8_t> bytesFromHex(std::string hex)
+{
+  std::vector<uint8_t> res;
+
+  for (size_t i = 0; i < (hex.size()-1); i=i+2) {
+    uint8_t v1 = byteFromChar(hex[i]);
+    uint8_t v2 = byteFromChar(hex[i+1]);
+    res.push_back((v2 + (v1 << 4)));
+  }
+  return res;
+}

@@ -110,6 +110,8 @@ class NodeNabtoDevice : public Napi::ObjectWrap<NodeNabtoDevice> {
   void AddTcpTunnelService(const Napi::CallbackInfo& info);
   void RemoveTcpTunnelService(const Napi::CallbackInfo& info);
 
+  // EXPERIMENTAL
+  void SetRawPrivateKey(const Napi::CallbackInfo& info);
 
   NabtoDevice* nabtoDevice_;
   LogCallbackFunction logCallback_;

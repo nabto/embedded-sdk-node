@@ -87,6 +87,10 @@ export interface AuthorizationRequest {
 
 export type AuthorizationRequestCallback = (req: AuthorizationRequest) => void;
 
+export interface Experimental {
+  setRawPrivateKey(key: string): void;
+}
+
 export interface NabtoDevice {
   stop(): void;
   start(): Promise<void>;
@@ -114,6 +118,7 @@ export interface NabtoDevice {
   removeTcpTunnelService(serviceId: string): void;
 
   connection: Connection;
+  experimental: Experimental;
 
 }
 
