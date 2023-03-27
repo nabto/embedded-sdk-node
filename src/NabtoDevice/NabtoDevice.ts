@@ -6,7 +6,7 @@ export interface DeviceOptions {
   deviceId: string;
   serverUrl?: string;
   serverPort?: number;
-  privateKey: string;
+  privateKey?: string;
   rootCerts?: string;
   appName?: string;
   appVersion?: string;

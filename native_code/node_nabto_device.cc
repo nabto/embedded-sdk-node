@@ -111,17 +111,15 @@ void NodeNabtoDevice::SetOptions(const Napi::CallbackInfo& info) {
   Napi::Object opts = info[0].ToObject();
 
   if (!opts.Has("productId") ||
-      !opts.Has("deviceId") ||
-      !opts.Has("privateKey")) {
-    Napi::TypeError::New(info.Env(), "Missing parameter, productId, deviceId, privateKey is required").ThrowAsJavaScriptException();
+      !opts.Has("deviceId")) {
+    Napi::TypeError::New(info.Env(), "Missing parameter, productId, deviceId is required").ThrowAsJavaScriptException();
     return;
   }
 
   if (!opts.Get("productId").IsString() ||
-      !opts.Get("deviceId").IsString() ||
-      !opts.Get("privateKey").IsString())
+      !opts.Get("deviceId").IsString())
   {
-    Napi::TypeError::New(info.Env(), "Invalid parameter, productId, deviceId, privateKey must be strings").ThrowAsJavaScriptException();
+    Napi::TypeError::New(info.Env(), "Invalid parameter, productId, deviceId must be strings").ThrowAsJavaScriptException();
     return;
 
   }
@@ -142,12 +140,15 @@ void NodeNabtoDevice::SetOptions(const Napi::CallbackInfo& info) {
     return;
   }
 
-  ec = nabto_device_set_private_key(nabtoDevice_, opts.Get("privateKey").ToString().Utf8Value().c_str());
-  if (ec != NABTO_DEVICE_EC_OK) {
-    std::string msg = "Failed to set private key with error: ";
-    msg += nabto_device_error_get_message(ec);
-    Napi::Error::New(info.Env(),  msg).ThrowAsJavaScriptException();
-    return;
+  if (opts.Has("privateKey") && opts.Get("privateKey").IsString())
+  {
+    ec = nabto_device_set_private_key(nabtoDevice_, opts.Get("privateKey").ToString().Utf8Value().c_str());
+    if (ec != NABTO_DEVICE_EC_OK) {
+      std::string msg = "Failed to set private key with error: ";
+      msg += nabto_device_error_get_message(ec);
+      Napi::Error::New(info.Env(),  msg).ThrowAsJavaScriptException();
+      return;
+    }
   }
 
   if (opts.Has("serverUrl") && opts.Get("serverUrl").IsString())
