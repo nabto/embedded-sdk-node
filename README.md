@@ -51,6 +51,7 @@ This list contains implementation TODOs which does not fit as a comment in the c
 ## build commonJs and esm
 
 ```
+npm install
 tsc --module commonjs --outDir dist
 tsc --target es2022 --outDir esm
 ```
