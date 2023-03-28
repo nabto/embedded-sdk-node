@@ -1,4 +1,7 @@
 {
+  "variables": {
+    "libPath": "<!(pwd)/build/Release"
+  },
   "targets": [
     {
       "target_name": "nabto_device",
@@ -15,7 +18,7 @@
             '-lnabto_device',
         ],
         'library_dirs': [
-            '../native_libraries/lib/linux-x86_64',
+          '<@(libPath)'
         ]
       },
       "copies":[
@@ -28,7 +31,7 @@
             }
       ],
       "ldflags": [
-        "-Wl,-rpath,./native_libraries/lib/linux-x86_64"
+        "-Wl,-rpath,<@(libPath)"
       ],
        'defines': [ 'NAPI_DISABLE_CPP_EXCEPTIONS' ]
     }

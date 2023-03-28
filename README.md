@@ -46,3 +46,11 @@ This list contains implementation TODOs which does not fit as a comment in the c
  * CI
  * Attached/remote tests
  * When stopping, coap/authReq listeners cause node to hang for a few sec until the garbage collector cleans it up.
+
+
+## build commonJs and esm
+
+```
+tsc --module commonjs --outDir dist
+tsc --target es2022 --outDir esm
+```

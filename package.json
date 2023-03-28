@@ -2,7 +2,8 @@
   "name": "embedded-sdk-node",
   "version": "0.0.1",
   "description": "Nabto Embedded SDK for Nodejs",
-  "main": "index.js",
+  "main": "dist/tmp/foobar/embedded-sdk-node/src/NabtoDevice/NabtoDevice.js",
+  "module": "esm/tmp/foobar/embedded-sdk-node/src/NabtoDevice/NabtoDevice.js",
   "scripts": {
     "test": "mocha --timeout 15000",
     "install": "node-gyp rebuild",
