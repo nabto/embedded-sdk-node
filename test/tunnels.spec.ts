@@ -1,7 +1,7 @@
 import 'mocha'
 import chai from 'chai';
 import { env } from 'process';
-import { Connection, NabtoClient, NabtoClientFactory } from '../../edge-client-node/src/NabtoClient/NabtoClient'
+import { Connection, NabtoClient, NabtoClientFactory } from 'edge-client-node'
 import { AuthorizationRequest, DeviceOptions, LogMessage, NabtoDevice, NabtoDeviceFactory } from '../src/NabtoDevice/NabtoDevice';
 import { decode } from 'cbor-x';
 import express, {Request, Response, NextFunction} from 'express';
