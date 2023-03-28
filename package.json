@@ -2,9 +2,9 @@
   "name": "embedded-sdk-node",
   "version": "0.0.1",
   "description": "Nabto Embedded SDK for Nodejs",
-  "main": "dist/embedded-sdk-node/src/NabtoDevice/NabtoDevice.js",
-  "module": "esm/embedded-sdk-node/src/NabtoDevice/NabtoDevice.js",
-  "types": "dist/embedded-sdk-node/src/NabtoDevice/NabtoDevice.d.ts",
+  "main": "dist/NabtoDevice/NabtoDevice.js",
+  "module": "esm/NabtoDevice/NabtoDevice.js",
+  "types": "dist/NabtoDevice/NabtoDevice.d.ts",
   "scripts": {
     "test": "mocha --timeout 15000",
     "build:cjs": "tsc --module commonjs --outDir dist",
