@@ -7,7 +7,10 @@
   "types": "dist/embedded-sdk-node/src/NabtoDevice/NabtoDevice.d.ts",
   "scripts": {
     "test": "mocha --timeout 15000",
-    "install": "node-gyp rebuild",
+    "build:cjs": "tsc --module commonjs --outDir dist",
+    "build:esm": "tsc --module es2022 --outDir esm",
+    "build": "npm run build:esm && npm run build:cjs",
+    "install": "node-gyp rebuild && npm run build",
     "buildAndTest": "node-gyp build --debug && mocha --timeout 15000"
   },
   "repository": {
