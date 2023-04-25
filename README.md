@@ -31,6 +31,13 @@ Some tests will test logging, some tests do not have logging at all, but some te
 NABTO_LOG_LEVEL=trace npm run buildAndTest
 ```
 
+## Usage as dependency
+
+To use this as a dependency in you own node package run:
+
+```
+npm install --save git@github.com:nabto/embedded-sdk-node.git
+```
 
 ## Implementation Todos
 
