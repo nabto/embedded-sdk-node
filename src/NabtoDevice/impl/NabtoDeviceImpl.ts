@@ -1,6 +1,20 @@
-import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent, ConnectionRef, Connection, CoapMethod, CoapRequestCallback, CoapRequest, AuthorizationRequestCallback, AuthorizationRequest, Experimental } from "../NabtoDevice";
+import { NabtoDevice, DeviceConfiguration, DeviceOptions, LogMessage, ConnectionEvent, ConnectionEventCallback, DeviceEventCallback, DeviceEvent, ConnectionRef, Connection, CoapMethod, CoapRequestCallback, CoapRequest, AuthorizationRequestCallback, AuthorizationRequest, Experimental, IceServersRequest, IceServer } from "../NabtoDevice";
 
 var nabto_device = require('bindings')('nabto_device');
+
+export class IceServersRequestImpl implements IceServersRequest {
+    iceRequest: any;
+
+    execute(identifier: string): Promise<IceServer[]> {
+        return this.iceRequest.send(identifier).then(() => {
+            return this.iceRequest.getResponse();
+        });
+    }
+
+    constructor(device: any) {
+        this.iceRequest = new nabto_device.IceServersRequest(device);
+    }
+}
 
 export class ExperimentalImpl implements Experimental {
     nabtoDevice: any;
@@ -11,6 +25,10 @@ export class ExperimentalImpl implements Experimental {
 
     setRawPrivateKey(key: string): void {
         this.nabtoDevice.setRawPrivateKey(key);
+    }
+
+    createIceServersRequest(): IceServersRequest {
+        return new IceServersRequestImpl(this.nabtoDevice);
     }
 }
 

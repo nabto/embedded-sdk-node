@@ -165,7 +165,7 @@ void NodeNabtoDevice::SetOptions(const Napi::CallbackInfo& info) {
 
   if (opts.Has("serverPort") && opts.Get("serverPort").IsNumber())
   {
-    ec = nabto_device_set_server_port(nabtoDevice_, opts.Get("serverUrl").ToNumber().Uint32Value());
+    ec = nabto_device_set_server_port(nabtoDevice_, opts.Get("serverPort").ToNumber().Uint32Value());
     if (ec != NABTO_DEVICE_EC_OK)
     {
       std::string msg = "Failed to set server port with error: ";
@@ -256,9 +256,13 @@ Napi::Value NodeNabtoDevice::GetConfiguration(const Napi::CallbackInfo& info)
   const char* dev = nabto_device_get_device_id(nabtoDevice_);
   conf.Set("deviceId", dev);
   const char* appName = nabto_device_get_app_name(nabtoDevice_);
-  conf.Set("appName", appName);
+  if (appName != NULL) {
+    conf.Set("appName", appName);
+  }
   const char* appVer = nabto_device_get_app_version(nabtoDevice_);
-  conf.Set("appVersion", appVer);
+  if (appVer != NULL) {
+    conf.Set("appVersion", appVer);
+  }
 
   uint16_t port = 0;
   NabtoDeviceError ec = nabto_device_get_local_port(nabtoDevice_, &port);
@@ -660,3 +664,102 @@ std::vector<uint8_t> bytesFromHex(std::string hex)
   }
   return res;
 }
+
+
+/********* Ice Servers Request ****/
+
+
+
+class IceFutureContext : public FutureContext
+{
+public:
+  IceFutureContext(NabtoDevice* device, std::string identifier, NabtoDeviceIceServersRequest* req, Napi::Env env) : FutureContext(device, env)
+  {
+    nabto_device_ice_servers_request_send(identifier.c_str(), req, future_);
+    arm(false);
+  }
+};
+
+
+Napi::Object IceServersRequest::Init(Napi::Env env, Napi::Object exports)
+{
+  Napi::Function func =
+    DefineClass(
+      env,
+      "IceServersRequest",
+        {
+          InstanceMethod("send", &IceServersRequest::Send),
+          InstanceMethod("getResponse", &IceServersRequest::getResponse),
+        }
+    );
+  Napi::FunctionReference* constructor = new Napi::FunctionReference();
+  *constructor = Napi::Persistent(func);
+  env.SetInstanceData(constructor);
+
+  exports.Set("IceServersRequest", func);
+  return exports;
+}
+
+IceServersRequest::IceServersRequest(const Napi::CallbackInfo& info)
+: Napi::ObjectWrap<IceServersRequest>(info) {
+  Napi::Env env = info.Env();
+
+  int length = info.Length();
+  if (length < 1)
+  {
+    Napi::TypeError::New(env, "Expects 1 argument: device").ThrowAsJavaScriptException();
+  }
+  Napi::Value device = info[0];
+
+  NodeNabtoDevice* d = Napi::ObjectWrap<NodeNabtoDevice>::Unwrap(device.ToObject());
+  device_ = d->getDevice();
+
+  req_ = nabto_device_ice_servers_request_new(device_);
+
+}
+
+IceServersRequest::~IceServersRequest()
+{
+  nabto_device_ice_servers_request_free(req_);
+}
+
+Napi::Value IceServersRequest::Send(const Napi::CallbackInfo& info)
+{
+  Napi::Env env = info.Env();
+  int length = info.Length();
+  if (length < 1 || !info[0].IsString())
+  {
+    Napi::TypeError::New(env, "Expects 1 argument; identifier: string").ThrowAsJavaScriptException();
+  }
+
+  IceFutureContext* ifc = new IceFutureContext(device_, info[0].ToString().Utf8Value().c_str(), req_, info.Env());
+  return ifc->Promise();
+}
+
+Napi::Value IceServersRequest::getResponse(const Napi::CallbackInfo& info)
+{
+  Napi::Env env = info.Env();
+
+
+  size_t n = nabto_device_ice_servers_request_get_server_count(req_);
+  Napi::Array resp = Napi::Array::New(env, n);
+
+  for (size_t i = 0; i < n; i++) {
+    Napi::Object serv = Napi::Object::New(env);
+    const char* username = nabto_device_ice_servers_request_get_username(req_, i);
+    const char* cred = nabto_device_ice_servers_request_get_credential(req_, i);
+    size_t urlCount = nabto_device_ice_servers_request_get_urls_count(req_, i);
+    serv.Set("username", std::string(username));
+    serv.Set("credential", std::string(cred));
+    Napi::Array urls = Napi::Array::New(env, urlCount);
+
+    for (size_t u = 0; u < urlCount; u++) {
+      urls[u] = std::string(nabto_device_ice_servers_request_get_url(req_, i, u));
+    }
+    serv.Set("Urls", urls);
+    resp[i] = serv;
+  }
+  return resp;
+}
+
+

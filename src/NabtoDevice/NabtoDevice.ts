@@ -87,8 +87,19 @@ export interface AuthorizationRequest {
 
 export type AuthorizationRequestCallback = (req: AuthorizationRequest) => void;
 
+export interface IceServer {
+  username: string;
+  credential: string;
+  urls: string[];
+}
+
+export interface IceServersRequest {
+  execute(identifier: string): Promise<IceServer[]>;
+}
+
 export interface Experimental {
   setRawPrivateKey(key: string): void;
+  createIceServersRequest(): IceServersRequest;
 }
 
 export interface NabtoDevice {
