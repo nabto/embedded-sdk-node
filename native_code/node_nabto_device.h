@@ -2,6 +2,7 @@
 
 #include <napi.h>
 #include <nabto/nabto_device.h>
+#include <nabto/nabto_device_experimental.h>
 #include "future.h"
 #include "connection_events.h"
 
@@ -117,4 +118,21 @@ class NodeNabtoDevice : public Napi::ObjectWrap<NodeNabtoDevice> {
   LogCallbackFunction logCallback_;
   DeviceEventFutureContext* devEvents_;
   ConnectionEventFutureContext* connEvents_;
+};
+
+
+class IceServersRequest : public Napi::ObjectWrap<IceServersRequest>
+{
+public:
+  static Napi::Object Init(Napi::Env env, Napi::Object exports);
+  IceServersRequest(const Napi::CallbackInfo& info);
+  ~IceServersRequest();
+
+private:
+  Napi::Value Send(const Napi::CallbackInfo& info);
+  Napi::Value getResponse(const Napi::CallbackInfo& info);
+
+  NabtoDevice* device_;
+  NabtoDeviceIceServersRequest* req_;
+
 };

@@ -9,6 +9,7 @@ Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
   tmp = CoapEndpoint::Init(env, exports);
   tmp = AuthRequest::Init(env, exports);
   tmp = AuthHandler::Init(env, exports);
+  tmp = IceServersRequest::Init(env, exports);
   return tmp;
 }
 
