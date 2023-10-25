@@ -333,11 +333,13 @@ export class StreamImpl implements Stream {
   readSome(): Promise<ArrayBuffer> {
     return this.stream.readSome().then(() => {
       return this.stream.getData();
-  });
+    });
   }
 
   readAll(length: number): Promise<ArrayBuffer> {
-    return this.stream.readAll(length);
+    return this.stream.readAll(length).then(() => {
+      return this.stream.getData();
+    });
   }
 
   write(data: ArrayBuffer): Promise<void> {

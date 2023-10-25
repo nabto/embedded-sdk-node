@@ -85,9 +85,7 @@ describe.only('streaming', () => {
   });
 
   it('open stream', async () => {
-    let deviceStream: Stream | undefined;
     dev.addStream(4242, async (stream) => {
-      deviceStream = stream;
       await stream.accept();
     });
     await dev.start();
@@ -101,8 +99,7 @@ describe.only('streaming', () => {
     stream.abort();
   });
 
-  it('open stream readSome', async () => {
-    let deviceStream: Stream | undefined;
+  it('stream readSome', async () => {
     let testData = "hello World";
     let buf = bufferFromString(testData);
 
@@ -114,12 +111,9 @@ describe.only('streaming', () => {
     })
 
     dev.addStream(4242, async (stream) => {
-      deviceStream = stream;
       try {
         await stream.accept();
         let readBuf = await stream.readSome();
-        console.log("readBuf: ", readBuf);
-        console.log("buf: ", buf);
         expect(readBuf.byteLength).to.equal(buf.byteLength);
         let readBufStr = stringFromBuffer(readBuf);
         expect(readBufStr).to.equal(testData);
@@ -143,5 +137,109 @@ describe.only('streaming', () => {
     await stream.close().catch((err) => {expect(err).to.be.undefined});
     stream.abort();
   });
+
+  it('stream readAll', async () => {
+    let testData = "hello World";
+    let buf = bufferFromString(testData);
+
+    let resolver: (value: void | PromiseLike<void>) => void;
+    let rejecter: (value: any | PromiseLike<any>) => void;
+    const p = new Promise<void>((resolve, reject) => {
+      resolver = resolve;
+      rejecter = reject;
+    })
+
+    dev.addStream(4242, async (stream) => {
+      try {
+        await stream.accept();
+        let readBuf = await stream.readAll(6);
+        expect(readBuf.byteLength).to.equal(6);
+        let readBufStr = stringFromBuffer(readBuf);
+        expect(readBufStr).to.equal(testData.substring(0,6));
+
+        let readBuf2 = await stream.readAll(5);
+        expect(readBuf2.byteLength).to.equal(5);
+        let readBufStr2 = stringFromBuffer(readBuf2);
+        expect(readBufStr2).to.equal(testData.substring(6));
+
+        resolver();
+      } catch (err) {
+        rejecter(err);
+      }
+    });
+    await dev.start();
+
+    [cli, conn] = createClientWithConn();
+    await conn.connect();
+
+    let stream = conn.createStream();
+    await stream.open(4242).catch((err) => {expect(err).to.be.undefined});
+
+    await stream.write(buf);
+
+    await p;
+
+    await stream.close().catch((err) => {expect(err).to.be.undefined});
+    stream.abort();
+  });
+
+  it('stream write', async () => {
+    let testData = "hello World";
+    let buf = bufferFromString(testData);
+
+    dev.addStream(4242, async (stream) => {
+      try {
+        await stream.accept();
+        await stream.write(buf);
+      } catch (err) {
+        console.log("Stream failure!: ", err);
+      }
+    });
+    await dev.start();
+
+    [cli, conn] = createClientWithConn();
+    await conn.connect();
+
+    let stream = conn.createStream();
+    await stream.open(4242).catch((err) => {expect(err).to.be.undefined});
+
+    let readBuf = await stream.readSome();
+    expect(readBuf.byteLength).to.equal(buf.byteLength);
+    let readBufStr = stringFromBuffer(readBuf);
+    expect(readBufStr).to.equal(testData);
+
+    await stream.close().catch((err) => {expect(err).to.be.undefined});
+    stream.abort();
+  });
+
+  it('stream close', async () => {
+    let testData = "hello World";
+    let buf = bufferFromString(testData);
+
+    dev.addStream(4242, async (stream) => {
+      try {
+        await stream.accept();
+        await stream.close();
+      } catch (err) {
+        console.log("Stream failure!: ", err);
+      }
+    });
+    await dev.start();
+
+    [cli, conn] = createClientWithConn();
+    await conn.connect();
+
+    let stream = conn.createStream();
+    await stream.open(4242).catch((err) => {expect(err).to.be.undefined});
+
+    try {
+      await stream.readSome();
+      expect(false).to.be.true;
+    } catch (err) {
+      expect(err).not.to.be.undefined;
+    }
+    stream.abort();
+  });
+
 
 });

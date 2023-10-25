@@ -2,7 +2,7 @@
 
 #include <napi.h>
 #include "future.h"
-#include <iostream>
+
 class StreamListenFutureContext : public FutureContext
 {
 public:
@@ -75,7 +75,6 @@ public:
     ReadSomeFutureContext(NabtoDevice* device, Napi::Env env, NabtoDeviceStream* stream) : ReadFutureContext(device, env, stream)
     {
         readBuffer_ = calloc(1, 1024);
-        std::cout << "stream_read_some future: " << future_ << std::endl;
         nabto_device_stream_read_some(stream, future_, (void*)readBuffer_, 1024, &readLength_);
         arm(false);
     }
