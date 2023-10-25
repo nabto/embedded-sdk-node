@@ -154,7 +154,7 @@ Stream::Stream(const Napi::CallbackInfo& info)
 }
 
 Stream::~Stream(){
-
+    nabto_device_stream_free(stream_);
 }
 
 
