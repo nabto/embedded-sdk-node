@@ -84,12 +84,20 @@ describe.only('streaming', () => {
     dev.stop();
   });
 
-  it('open stream', async () => {
-    dev.addStream(4242, async (stream) => {
+  it('add ephemeral stream', async () => {
+    let port = dev.addStream(0, async (stream) => {
       await stream.accept();
     });
     await dev.start();
+    expect(port).to.be.greaterThanOrEqual(0x80000000);
+  });
 
+  it('open stream', async () => {
+    let port = dev.addStream(4242, async (stream) => {
+      await stream.accept();
+    });
+    await dev.start();
+    expect(port).to.equal(4242);
     [cli, conn] = createClientWithConn();
     await conn.connect();
 

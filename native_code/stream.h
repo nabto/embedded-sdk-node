@@ -36,6 +36,11 @@ public:
         return stream_;
     }
 
+    uint32_t getPort()
+    {
+        return port_;
+    }
+
 private:
 
     NabtoDeviceListener* lis_;
@@ -103,10 +108,12 @@ public:
 
     Napi::Value NotifyStream(const Napi::CallbackInfo& info);
     Napi::Value GetCurrentStream(const Napi::CallbackInfo& info);
+    Napi::Value GetStreamPort(const Napi::CallbackInfo& info);
 
 private:
     NabtoDevice* device_;
     StreamListenFutureContext* listener_;
+    uint32_t port_;
 };
 
 class Stream : public Napi::ObjectWrap<Stream>

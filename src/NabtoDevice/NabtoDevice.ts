@@ -137,7 +137,10 @@ export interface NabtoDevice {
 
   addCoapEndpoint(method: CoapMethod, path: string, cb: CoapRequestCallback): void;
 
-  addStream(port: number, cb: StreamCallback): void;
+  // Setting the port = 0, the device uses an ephemeral port number.
+  // if port = 0: this returns the chosen ephemeral port
+  // if port != 0: this returns the provided port
+  addStream(port: number, cb: StreamCallback): number;
 
   addTcpTunnelService(serviceId: string, serviceType: string, host: string, port: number): void;
   removeTcpTunnelService(serviceId: string): void;

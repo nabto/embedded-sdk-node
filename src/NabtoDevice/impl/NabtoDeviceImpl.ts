@@ -169,8 +169,10 @@ export class NabtoDeviceImpl implements NabtoDevice {
     this.coapEndpoints.push(new CoapEndpointHandler(this.nabtoDevice, method, path, cb));
   }
 
-  addStream(port: number, cb: StreamCallback): void {
-    this.streamListeners.push(new StreamListener(this.nabtoDevice, port, cb));
+  addStream(port: number, cb: StreamCallback): number {
+    let s = new StreamListener(this.nabtoDevice, port, cb);
+    this.streamListeners.push(s);
+    return s.getStreamPort();
   }
 
   addTcpTunnelService(serviceId: string, serviceType: string, host: string, port: number): void {
@@ -300,6 +302,10 @@ export class StreamListener {
 
   stop(): void {
     this.listener.stop();
+  }
+
+  getStreamPort(): number {
+    return this.listener.getStreamPort();
   }
 
   async nextStream(): Promise<void> {

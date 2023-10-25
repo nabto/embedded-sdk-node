@@ -31,6 +31,7 @@ Napi::Object StreamListener::Init(Napi::Env env, Napi::Object exports){
                 InstanceMethod("stop", &StreamListener::Stop),
                 InstanceMethod("notifyStream", &StreamListener::NotifyStream),
                 InstanceMethod("getCurrentStream", &StreamListener::GetCurrentStream),
+                InstanceMethod("getStreamPort", &StreamListener::GetStreamPort),
             });
 
     Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -98,6 +99,10 @@ Napi::Value StreamListener::GetCurrentStream(const Napi::CallbackInfo& info){
     return Napi::Number::New(info.Env(), (uint64_t)listener_->getStream());
 }
 
+Napi::Value StreamListener::GetStreamPort(const Napi::CallbackInfo& info)
+{
+    return Napi::Number::New(info.Env(), listener_->getPort());
+}
 
 /**************** STREAM IMPL ***************/
 
