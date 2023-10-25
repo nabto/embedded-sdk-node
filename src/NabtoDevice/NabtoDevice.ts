@@ -71,6 +71,18 @@ export interface CoapRequest {
 
 export type CoapRequestCallback = (req: CoapRequest) => void;
 
+export interface Stream {
+  accept(): Promise<void>;
+  getConnectionRef(): ConnectionRef;
+  readSome(): Promise<ArrayBuffer>;
+  readAll(length: number): Promise<ArrayBuffer>;
+  write(data: ArrayBuffer): Promise<void>;
+  close(): Promise<void>;
+  abort(): void;
+}
+
+export type StreamCallback = (stream: Stream) => void;
+
 export interface Connection {
   getClientFingerprint(connectionRef: ConnectionRef): string;
   isLocal(connectionRef: ConnectionRef): Boolean;
@@ -124,6 +136,8 @@ export interface NabtoDevice {
   areServerConnectTokensSync(): Boolean;
 
   addCoapEndpoint(method: CoapMethod, path: string, cb: CoapRequestCallback): void;
+
+  addStream(port: number, cb: StreamCallback): void;
 
   addTcpTunnelService(serviceId: string, serviceType: string, host: string, port: number): void;
   removeTcpTunnelService(serviceId: string): void;

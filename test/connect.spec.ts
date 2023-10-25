@@ -1,10 +1,8 @@
 import 'mocha'
-import chai from 'chai';
+import { expect } from 'chai'
 import { CoapMethod, CoapRequest, ConnectionEvent, DeviceOptions, LogMessage, NabtoDevice, NabtoDeviceFactory } from '../src/NabtoDevice/NabtoDevice';
 import { env } from 'process';
 import { Connection, NabtoClient, NabtoClientFactory } from 'edge-client-node'
-
-const expect = chai.expect;
 
 const logLevel = env.NABTO_LOG_LEVEL;
 
