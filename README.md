@@ -1,4 +1,7 @@
 # embedded-sdk-node
+
+WARNING: Experimental.
+
 NodeJs wrapper for the Nabto Embedded SDK
 
 
